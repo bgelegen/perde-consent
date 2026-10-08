@@ -1,0 +1,1648 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Perde gizlilik taraması ve KVKK uyumlu çerez onay banner'ı oluşturucu.">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Perde Gizlilik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;600&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: tool-first product page. The scanner is the hero (input sheet beside a live audit report),
+   then the consent-banner builder with a mock storefront preview, then checks and FAQ. */
+:root{
+  --bg:#F6F4F7; --surface:#FFFFFF; --sunk:#EFECF1; --ink:#1D1A22; --muted:#665F6E; --line:#E1DCE5;
+  --accent:#7A1F4E; --accent-ink:#FFFFFF; --accent-soft:#F4E4EC;
+  --crit:#B3380C; --crit-soft:#FBE8DE; --warn:#8A5B00; --warn-soft:#F8EDCF;
+  --ok:#21704E; --ok-soft:#DFF0E7; --info:#4A5263; --info-soft:#E9EBF1;
+  --code-bg:#1F1A25; --code-fg:#EFE8F4;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Public Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --radius:12px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#131116; --surface:#1B181F; --sunk:#221E27; --ink:#EEEAF1; --muted:#A49CAC; --line:#312C37;
+    --accent:#E59BC1; --accent-ink:#2A0E1D; --accent-soft:#3A2130;
+    --crit:#FF9466; --crit-soft:#3A2017; --warn:#E8BC54; --warn-soft:#352A12;
+    --ok:#71CF9F; --ok-soft:#163026; --info:#AEB6C6; --info-soft:#262A33;
+    --code-bg:#0F0D12; --code-fg:#EFE8F4; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#131116; --surface:#1B181F; --sunk:#221E27; --ink:#EEEAF1; --muted:#A49CAC; --line:#312C37;
+  --accent:#E59BC1; --accent-ink:#2A0E1D; --accent-soft:#3A2130;
+  --crit:#FF9466; --crit-soft:#3A2017; --warn:#E8BC54; --warn-soft:#352A12;
+  --ok:#71CF9F; --ok-soft:#163026; --info:#AEB6C6; --info-soft:#262A33;
+  --code-bg:#0F0D12; --code-fg:#EFE8F4; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code,.mono{font-family:var(--f-mono);font-size:.86em}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--bg);background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1240px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:20px;color:var(--ink);text-decoration:none;letter-spacing:-.01em;flex:none}
+.lg-bg{fill:var(--accent)} .lg-fg{fill:var(--accent-ink)}
+.nav{display:flex;gap:2px;margin-left:auto;overflow-x:auto;min-width:0;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{color:var(--muted);text-decoration:none;font-weight:500;padding:6px 10px;border-radius:8px;font-size:14px;white-space:nowrap}
+.nav a:hover{color:var(--ink);background:var(--sunk)}
+
+.wrap{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:0 56px}
+@media (max-width:480px){.wrap,.top-in{padding-inline:16px}}
+
+/* hero */
+.hero{padding-block:44px 24px;display:grid;gap:14px;max-width:880px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--accent);margin:0}
+.hero h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2.1rem,5.4vw,3.7rem);line-height:1.02;letter-spacing:-.028em;margin:0;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p.lede{font-size:17px;color:var(--muted);margin:0;max-width:64ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px 22px;padding:0;margin:4px 0 0;list-style:none;font-size:14px;font-weight:500}
+.facts li{display:flex;gap:8px;align-items:center}
+.facts svg{color:var(--ok);flex:none}
+
+/* sections */
+.sec{padding-block:36px 4px}
+.sec-h{display:grid;gap:6px;margin-bottom:18px;max-width:760px}
+.sec-h h2{font-family:var(--f-display);font-size:clamp(1.5rem,3vw,2.1rem);letter-spacing:-.018em;margin:0;line-height:1.1;text-wrap:balance}
+.sec-h p{margin:0;color:var(--muted)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;min-width:0;display:grid;gap:16px;align-content:start}
+@media (max-width:480px){.panel{padding:16px}}
+
+/* scanner layout */
+.scan{display:grid;gap:20px;align-items:start}
+@media (min-width:1040px){.scan{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}.scan-in{position:sticky;top:76px}}
+
+.seg{display:inline-flex;flex-wrap:wrap;padding:3px;background:var(--sunk);border-radius:10px;gap:2px;justify-self:start;max-width:100%}
+.seg button{font:inherit;font-size:14px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:7px 12px;border-radius:8px;cursor:pointer}
+.seg button[aria-selected="true"],.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0/.1)}
+
+.fld{display:grid;gap:6px;min-width:0}
+.fld>label,.lbl{font-size:13px;font-weight:600;color:var(--ink)}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+input[type=text],input[type=url],input[type=number],select,textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;min-width:0}
+textarea{font-family:var(--f-mono);font-size:12.5px;line-height:1.5;min-height:300px;resize:vertical;background:var(--sunk)}
+textarea.plain{font-family:var(--f-body);font-size:14px;min-height:92px;background:var(--surface)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+
+.btn{font:inherit;font-weight:600;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 15px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;text-decoration:none;line-height:1.2}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.sm{padding:6px 11px;font-size:13px}
+.row-btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:22px 16px;text-align:center;display:grid;gap:12px;justify-items:center;background:var(--sunk);transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop svg{color:var(--accent)}
+.alert{font-size:13.5px;padding:10px 12px;border-radius:8px;background:var(--crit-soft);color:var(--crit);margin:0}
+details.how{font-size:13.5px;border-top:1px solid var(--line);padding-top:12px}
+details.how summary{cursor:pointer;font-weight:600}
+details.how h4{font-size:13px;margin:12px 0 4px}
+details.how ol{margin:0;padding-left:20px;color:var(--muted);display:grid;gap:3px}
+.privacy{display:flex;gap:8px;align-items:flex-start}
+.privacy svg{flex:none;margin-top:2px;color:var(--ok)}
+
+/* report */
+.rep-h{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.rep-h h3{font-family:var(--f-display);font-size:21px;margin:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.meta{font-family:var(--f-mono);font-size:12px;color:var(--muted);word-break:break-word;margin-top:4px}
+.sum{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;padding:16px;border-radius:10px;background:var(--sunk)}
+@media (max-width:520px){.sum{grid-template-columns:1fr;justify-items:start}}
+.ring{width:104px;height:104px;display:block}
+.ring-bg{stroke:var(--line)} .ring-n{font-family:var(--f-display);font-weight:700;font-size:28px;fill:var(--ink)} .ring-s{font-size:10px;fill:var(--muted);font-family:var(--f-mono)}
+.g-ok{color:var(--ok);stroke:var(--ok)} .g-warn{color:var(--warn);stroke:var(--warn)} .g-crit{color:var(--crit);stroke:var(--crit)}
+.grade{font-family:var(--f-display);font-size:22px;font-weight:700;line-height:1.2;stroke:none}
+.sum-p{margin:4px 0 8px;color:var(--muted);font-size:14px}
+.counts{display:flex;gap:6px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.stat b{display:block;font-family:var(--f-display);font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--muted)}
+
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;padding:3px 8px;border-radius:999px;white-space:nowrap;line-height:1.4}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.s-crit{color:var(--crit);background:var(--crit-soft)} .s-warn{color:var(--warn);background:var(--warn-soft)}
+.s-info{color:var(--info);background:var(--info-soft)} .s-ok{color:var(--ok);background:var(--ok-soft)}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters button{font:inherit;font-size:13px;font-weight:600;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.flist{display:grid;gap:8px}
+.f{border:1px solid var(--line);border-radius:10px;background:var(--surface);min-width:0}
+.f summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:12px 14px}
+.f summary::-webkit-details-marker{display:none}
+.f summary::after{content:"";width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform .15s;margin-right:3px}
+.f[open] summary::after{transform:rotate(-135deg) translateY(-2px)}
+.f summary .t{font-weight:600;line-height:1.35}
+.f summary .tag{font-size:12px;color:var(--muted);white-space:nowrap}
+@media (max-width:560px){.f summary .tag{display:none}}
+.f-b{padding:0 14px 14px;display:grid;gap:10px;font-size:14.5px}
+.f-b>*{min-width:0}
+.f-b p{margin:0}
+.k{font-family:var(--f-mono);font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.08em;margin-bottom:4px}
+pre.code{margin:0;font-family:var(--f-mono);font-size:12px;line-height:1.6;background:var(--code-bg);color:var(--code-fg);padding:10px 12px;border-radius:8px;overflow-x:auto;white-space:pre;tab-size:2}
+.law{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+details.passed>summary{cursor:pointer;font-weight:600;font-size:14px;padding:4px 0 10px}
+.rep-sub{font-family:var(--f-display);font-size:17px;margin:8px 0 -6px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:540px}
+th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);background:var(--sunk);padding:8px 12px;white-space:nowrap}
+td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
+td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+th.num{text-align:right}
+td .mono{word-break:break-all}
+.empty{padding:28px 8px;text-align:center;display:grid;gap:6px;justify-items:center}
+.empty h3{font-family:var(--f-display);margin:0;font-size:20px}
+.empty p{margin:0;color:var(--muted);max-width:44ch}
+
+/* builder */
+.build{display:grid;gap:20px;align-items:start}
+@media (min-width:1040px){.build{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}.pv-col{position:sticky;top:76px}}
+.ctl{gap:24px}
+fieldset{border:0;padding:0;margin:0;display:grid;gap:12px;min-width:0}
+legend{font-family:var(--f-display);font-weight:700;font-size:16px;padding:0;margin-bottom:12px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:480px){.two{grid-template-columns:1fr}}
+.checks{display:grid;gap:10px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer}
+.check input{margin:3px 0 0;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.check small{display:block;color:var(--muted);font-size:12.5px}
+.check.off{cursor:default;opacity:.75}
+.color{display:flex;gap:8px;align-items:center}
+.color input[type=color]{width:44px;height:38px;padding:3px;border:1px solid var(--line);border-radius:8px;background:var(--surface);flex:none;cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--accent)}
+output{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-weight:400}
+
+.pv-col{display:grid;gap:12px;min-width:0}
+.pv{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.chrome{display:flex;gap:6px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--sunk)}
+.chrome i{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+.chrome span{margin-left:8px;font-family:var(--f-mono);font-size:11.5px;color:var(--muted);background:var(--surface);padding:3px 10px;border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pv-stage{position:relative;height:460px;overflow:hidden}
+.mock-top{display:flex;justify-content:space-between;align-items:center;padding:16px 20px}
+.mock-logo{font-family:var(--f-display);font-weight:700;font-size:16px}
+.mock-nav{display:flex;gap:8px}.mock-nav i{width:36px;height:8px;border-radius:4px;background:var(--line)}
+.mock-hero{margin:0 20px;padding:22px;border-radius:10px;background:var(--sunk);display:grid;gap:6px}
+.mock-hero b{font-family:var(--f-display);font-size:21px;line-height:1.15}
+.mock-hero span{color:var(--muted);font-size:13.5px}
+.mock-hero em{font-style:normal;justify-self:start;margin-top:6px;font-size:13px;font-weight:600;padding:7px 12px;border-radius:6px;background:var(--ink);color:var(--bg)}
+.mock-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 20px}
+.mock-grid div{height:92px;border-radius:8px;background:var(--sunk)}
+.pv-status{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13px}
+.pv-status .lbl{margin-right:2px}
+details.rec summary{cursor:pointer;font-size:13px;font-weight:600}
+details.rec pre{margin-top:8px}
+
+.code-sec{margin-top:22px;display:grid;gap:16px}
+.code-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;min-width:0}
+.code-h{display:flex;justify-content:space-between;align-items:center;gap:8px 12px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.code-h b{font-weight:600}
+.code-h .hint{flex-basis:100%}
+.code-card pre.code{max-height:340px;overflow:auto;border-radius:0}
+
+/* checks + faq */
+.checks-tbl table{min-width:640px}
+.checks-tbl td:first-child{font-weight:600;white-space:nowrap}
+.checks-tbl td:last-child{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.faq{max-width:820px}
+.faq details{border-top:1px solid var(--line);padding:14px 0}
+.faq details:last-child{border-bottom:1px solid var(--line)}
+.faq summary{font-weight:600;cursor:pointer}
+.faq p{color:var(--muted);margin:8px 0 0;max-width:70ch}
+.foot{border-top:1px solid var(--line);margin-top:40px;padding-top:18px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:8px;font-size:13.5px;font-weight:600;z-index:60;max-width:calc(100% - 32px)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="index.html" aria-label="Perde ana sayfa">
+      <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><rect class="lg-bg" x="1" y="1" width="26" height="26" rx="7"/><rect class="lg-fg" x="5.5" y="5.5" width="17" height="1.8" rx=".9"/><path class="lg-fg" d="M6.5 8.4h6.2v13.4c-2.3 0-3.7-1-4.3-3-.7-2.6-1.2-6-1.9-10.4z"/><path class="lg-fg" d="M21.5 8.4h-6.2v13.4c2.3 0 3.7-1 4.3-3 .7-2.6 1.2-6 1.9-10.4z"/></svg>
+      Perde
+    </a>
+    <nav class="nav" aria-label="Bölümler">
+      <a href="#tarama">Tarama</a>
+      <a href="#banner">Çerez banner'ı</a>
+      <a href="#kontroller">Kontroller</a>
+      <a href="#sss">SSS</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="eyebrow">Gizlilik denetimi · KVKK · GDPR · CCPA</p>
+    <h1>Sitenizin <em>perde arkasında</em> kimler var?</h1>
+    <p class="lede">Perde, ziyaretçi onay vermeden çalışan izleyicileri, üçüncü taraflara giden kişisel verileri ve eksik aydınlatmaları bulur. Sonra izleyicileri onaya bağlayan, Reddet düğmesini Kabul et kadar görünür kılan çerez banner'ını tek bir betikle kurmanızı sağlar.</p>
+    <ul class="facts">
+      <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tarama tarayıcınızda çalışır, hiçbir veri yüklenmez</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>50+ hizmet ve 15 onay aracı tanınır</li>
+      <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Banner ek ağ isteği yapmaz</li>
+    </ul>
+  </section>
+
+  <section class="sec" id="tarama" aria-labelledby="tarama-h">
+    <div class="sec-h">
+      <h2 id="tarama-h">Gizlilik taraması</h2>
+      <p>Sayfa kaynağı, betik, piksel ve gömülü içerikleri gösterir. HAR ağ kaydı ise gerçekten yazılan çerezleri ve üçüncü taraflara giden istekleri gösterir.</p>
+    </div>
+    <div class="scan">
+      <div class="panel scan-in" id="scan-in">
+        <div class="seg" role="tablist" aria-label="Tarama kaynağı">
+          <button type="button" role="tab" id="tab-html" aria-selected="true" aria-controls="pane-html">HTML kaynağı</button>
+          <button type="button" role="tab" id="tab-har" aria-selected="false" aria-controls="pane-har">HAR ağ kaydı</button>
+        </div>
+        <div class="fld">
+          <label for="domain">Sitenizin alan adı</label>
+          <input id="domain" type="text" placeholder="ornek.com.tr" autocomplete="off" spellcheck="false">
+          <p class="hint">Kendi kaynaklarınızı üçüncü taraflardan ayırmak için kullanılır. Boş bırakırsanız kaynaktan tahmin edilir.</p>
+        </div>
+        <div id="pane-html" role="tabpanel" aria-labelledby="tab-html" class="fld">
+          <label for="src">Sayfa kaynağı</label>
+          <textarea id="src" spellcheck="false" placeholder="Sitenizde Ctrl+U ile kaynağı açın, tümünü kopyalayıp buraya yapıştırın."></textarea>
+          <p class="hint">Bir .html dosyasını bu panele sürükleyip bırakabilirsiniz.</p>
+        </div>
+        <div id="pane-har" role="tabpanel" aria-labelledby="tab-har" hidden>
+          <div class="drop" id="drop">
+            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0l-4 4m4-4l4 4M5 15v3a2 2 0 002 2h10a2 2 0 002-2v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div><b>HAR dosyasını buraya bırakın</b><br><span class="hint">Geliştirici Araçları › Ağ sekmesinden dışa aktarılan .har dosyası</span></div>
+            <div class="row-btns" style="justify-content:center">
+              <label class="btn sm" for="har-file">Dosya seç</label>
+              <button class="btn sm" id="har-sample" type="button">Örnek HAR'ı tara</button>
+            </div>
+            <input type="file" id="har-file" accept=".har,.json,application/json" hidden>
+            <p class="hint" id="har-name" aria-live="polite"></p>
+          </div>
+        </div>
+        <p class="alert" id="scan-err" role="alert" hidden></p>
+        <div class="row-btns">
+          <button class="btn pri" id="run" type="button">Tara</button>
+          <button class="btn" id="load-sample" type="button">Örneği yükle</button>
+          <button class="btn" id="clear" type="button">Temizle</button>
+        </div>
+        <details class="how">
+          <summary>Kaynak ve HAR kaydı nasıl alınır?</summary>
+          <h4>HTML kaynağı</h4>
+          <ol>
+            <li>Sitenizi Chrome, Edge veya Firefox'ta açın.</li>
+            <li>Ctrl+U (Mac'te ⌥⌘U) ile sayfa kaynağını açın.</li>
+            <li>Ctrl+A ve Ctrl+C ile kopyalayıp yukarıdaki kutuya yapıştırın.</li>
+          </ol>
+          <h4>HAR ağ kaydı</h4>
+          <ol>
+            <li>Sitenizi gizli pencerede açın ki eski bir onay kaydı kalmasın.</li>
+            <li>F12 ile Geliştirici Araçları'nı açın, Ağ (Network) sekmesinde "Preserve log" ve "Disable cache" kutularını işaretleyin.</li>
+            <li>Sayfayı yenileyin ve çerez banner'ına dokunmadan birkaç saniye bekleyin.</li>
+            <li>İstek listesine sağ tıklayıp "Save all as HAR with content" seçin.</li>
+          </ol>
+        </details>
+        <p class="hint privacy"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>Tarama bu sayfada, kendi tarayıcınızda yapılır. Yapıştırdığınız kod ve yüklediğiniz dosya hiçbir sunucuya gönderilmez. HAR dosyaları oturum çerezlerinizi içerebilir; taradıktan sonra silin.</span></p>
+      </div>
+
+      <div class="panel" id="report" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="banner" aria-labelledby="banner-h">
+    <div class="sec-h">
+      <h2 id="banner-h">Çerez onay banner'ı</h2>
+      <p>Ayarları değiştirin, önizlemede deneyin, kodu kopyalayın. Banner kendi içinde gelir; ek dosya ya da ağ isteği gerektirmez ve izleyici betiklerini yalnızca ilgili kategoriye onay verildiğinde çalıştırır.</p>
+    </div>
+    <div class="build">
+      <div class="panel ctl">
+        <fieldset>
+          <legend>Kural ve dil</legend>
+          <div class="two">
+            <div class="fld">
+              <label for="b-region">Bölge kuralı</label>
+              <select id="b-region">
+                <option value="kvkk">Türkiye · KVKK (açık rıza)</option>
+                <option value="gdpr">AB ve BK · GDPR (açık rıza)</option>
+                <option value="ccpa">Kaliforniya · CCPA (itiraz)</option>
+                <option value="auto">Saat dilimine göre otomatik</option>
+              </select>
+            </div>
+            <div class="fld">
+              <label for="b-lang">Banner dili</label>
+              <select id="b-lang">
+                <option value="tr">Türkçe</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+          </div>
+          <p class="hint" id="b-region-hint"></p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Görünüm</legend>
+          <div class="fld">
+            <span class="lbl" id="l-pos">Konum</span>
+            <div class="seg" role="group" aria-labelledby="l-pos" id="b-position">
+              <button type="button" data-v="bar" aria-pressed="true">Alt şerit</button>
+              <button type="button" data-v="box" aria-pressed="false">Köşe kutusu</button>
+              <button type="button" data-v="modal" aria-pressed="false">Orta pencere</button>
+            </div>
+          </div>
+          <div class="fld">
+            <span class="lbl" id="l-theme">Tema</span>
+            <div class="seg" role="group" aria-labelledby="l-theme" id="b-theme">
+              <button type="button" data-v="auto" aria-pressed="true">Sisteme uy</button>
+              <button type="button" data-v="light" aria-pressed="false">Açık</button>
+              <button type="button" data-v="dark" aria-pressed="false">Koyu</button>
+            </div>
+          </div>
+          <div class="two">
+            <div class="fld">
+              <label for="b-accent-hex">Vurgu rengi</label>
+              <div class="color">
+                <input type="color" id="b-accent" value="#7a1f4e" aria-label="Vurgu rengi seçici">
+                <input type="text" id="b-accent-hex" value="#7A1F4E" maxlength="7" spellcheck="false" autocomplete="off">
+              </div>
+            </div>
+            <div class="fld">
+              <label for="b-radius">Köşe yuvarlaklığı <output id="b-radius-out" for="b-radius">12 px</output></label>
+              <input type="range" id="b-radius" min="0" max="24" step="1" value="12">
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Kategoriler</legend>
+          <div class="checks">
+            <label class="check off"><input type="checkbox" checked disabled id="b-cat-nec"><span>Zorunlu<small>Her zaman açık. Oturum, güvenlik, sepet ve onay kaydının kendisi.</small></span></label>
+            <label class="check"><input type="checkbox" id="b-cat-analytics" checked><span>Analitik<small>Ziyaret ölçümü ve oturum kaydı: Google Analytics, Hotjar, Clarity, Yandex Metrica.</small></span></label>
+            <label class="check"><input type="checkbox" id="b-cat-marketing" checked><span>Pazarlama<small>Reklam ve yeniden hedefleme: Meta Pixel, Google Ads, LinkedIn, TikTok.</small></span></label>
+            <label class="check"><input type="checkbox" id="b-cat-functional"><span>İşlevsel<small>Canlı destek, video ve harita gibi ek özellikler.</small></span></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Metinler</legend>
+          <div class="fld">
+            <label for="b-title">Başlık</label>
+            <input type="text" id="b-title" autocomplete="off">
+          </div>
+          <div class="fld">
+            <label for="b-desc">Açıklama</label>
+            <textarea id="b-desc" class="plain"></textarea>
+          </div>
+          <div class="fld">
+            <label for="b-policy">Çerez aydınlatma metni bağlantısı</label>
+            <input type="text" id="b-policy" value="/cerez-aydinlatma-metni" spellcheck="false" autocomplete="off">
+            <p class="hint">Tam adres (https://…) veya site içi yol (/…). Boş bırakılırsa bağlantı gösterilmez.</p>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Entegrasyonlar</legend>
+          <p class="hint">Seçtiklerinizin onaya bağlı kurulum kodu aşağıda üretilir.</p>
+          <div class="checks two" id="b-integ"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Gelişmiş</legend>
+          <div class="checks">
+            <label class="check"><input type="checkbox" id="b-cm" checked><span>Google Consent Mode v2 sinyalleri gönder<small>Google etiketlerine varsayılan olarak "denied", onaydan sonra "granted" bildirilir. GTM kullanıyorsanız açık tutun.</small></span></label>
+            <label class="check"><input type="checkbox" id="b-gpc" checked><span>Global Privacy Control sinyaline uy<small>Tarayıcı GPC gönderiyorsa CCPA modunda paylaşım kapalı başlar.</small></span></label>
+            <label class="check"><input type="checkbox" id="b-fab" checked><span>Tercihler düğmesini göster<small>Seçimden sonra köşede küçük bir düğme kalır; ziyaretçi onayını her zaman değiştirebilir.</small></span></label>
+          </div>
+          <div class="two">
+            <div class="fld">
+              <label for="b-endpoint">Onay kaydı adresi (isteğe bağlı)</label>
+              <input type="url" id="b-endpoint" placeholder="https://ornek.com.tr/api/onay" spellcheck="false" autocomplete="off">
+            </div>
+            <div class="fld">
+              <label for="b-version">Politika sürümü</label>
+              <input type="number" id="b-version" min="1" step="1" value="1">
+            </div>
+          </div>
+          <p class="hint">Kayıt adresi verilirse her seçim sendBeacon ile o adrese JSON olarak gönderilir. Sürümü artırdığınızda tüm ziyaretçilerden yeniden onay istenir.</p>
+        </fieldset>
+      </div>
+
+      <div class="pv-col">
+        <div class="pv">
+          <div class="chrome" aria-hidden="true"><i></i><i></i><i></i><span>https://www.ornekkahve.example</span></div>
+          <div id="pv-stage">
+            <div class="mock" aria-hidden="true">
+              <div class="mock-top"><span class="mock-logo">Örnek Kahve</span><span class="mock-nav"><i></i><i></i><i></i></span></div>
+              <div class="mock-hero"><b>Taze kavrulmuş çekirdekler</b><span>Her salı kavrulur, perşembe kapınızda.</span><em>Siparişe başla</em></div>
+              <div class="mock-grid"><div></div><div></div><div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="pv-status" id="pv-status" aria-live="polite"></div>
+        <div class="row-btns">
+          <button class="btn sm" type="button" id="pv-reset">Banner'ı yeniden göster</button>
+          <button class="btn sm" type="button" id="pv-open">Tercihler penceresini aç</button>
+        </div>
+        <details class="rec">
+          <summary>Onay kaydı (ziyaretçinin tarayıcısında saklanan)</summary>
+          <pre class="code" id="pv-rec">Henüz seçim yapılmadı.</pre>
+        </details>
+      </div>
+    </div>
+
+    <div class="code-sec">
+      <div class="code-card">
+        <div class="code-h"><b>1 · &lt;head&gt; içine, diğer tüm betiklerden önce ekleyin</b><span class="row-btns"><span class="hint" id="code-size"></span><button class="btn sm" type="button" data-copy="#code-install">Kopyala</button></span></div>
+        <pre class="code" id="code-install"></pre>
+      </div>
+      <div class="code-card">
+        <div class="code-h"><b>2 · İzleyici betiklerini onaya bağlayın</b><button class="btn sm" type="button" data-copy="#code-integ">Kopyala</button><p class="hint">Betiğin türünü <code>text/plain</code> yapın ve <code>data-perde</code> ile kategorisini yazın. Mevcut kurulum kodlarınızı bu biçime çevirmeniz yeterli.</p></div>
+        <pre class="code" id="code-integ"></pre>
+      </div>
+      <div class="code-card">
+        <div class="code-h"><b>3 · Tercih bağlantısı ve olaylar (isteğe bağlı)</b><button class="btn sm" type="button" data-copy="#code-api">Kopyala</button></div>
+        <pre class="code" id="code-api"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="kontroller" aria-labelledby="kontroller-h">
+    <div class="sec-h">
+      <h2 id="kontroller-h">Ne kontrol ediliyor?</h2>
+      <p>Her bulgu, kanıtı, düzeltme yolu ve dayandığı düzenlemeyle birlikte raporlanır.</p>
+    </div>
+    <div class="tbl-wrap checks-tbl">
+      <table>
+        <thead><tr><th>Kontrol</th><th>Ne arar</th><th>Dayanak</th></tr></thead>
+        <tbody>
+          <tr><td>Onay öncesi izleyiciler</td><td>Analitik, reklam ve oturum kaydı betiklerinin onaya bağlı olup olmadığı: <code>type="text/plain"</code>, Consent Mode varsayılanı, onay aracı.</td><td>KVKK m.5 · ePrivacy m.5(3)</td></tr>
+          <tr><td>Onay aracı</td><td>Cookiebot, OneTrust, Usercentrics, CookieYes, Didomi, iubenda, IAB TCF araçları ve Perde.</td><td>KVKK Çerez Rehberi</td></tr>
+          <tr><td>Piksel ve noscript</td><td><code>&lt;img&gt;</code> ve <code>&lt;iframe&gt;</code> ile çalışan izleme pikselleri.</td><td>KVKK m.5</td></tr>
+          <tr><td>Gömülü içerik</td><td>YouTube, Vimeo ve Google Maps çerçeveleri, çerezsiz alternatifleri.</td><td>KVKK m.5</td></tr>
+          <tr><td>Kişisel veri sızıntısı</td><td>Betiklerde ve üçüncü taraf isteklerinde e-posta, cep telefonu ve sağlama toplamı doğrulanmış TC kimlik numarası.</td><td>KVKK m.4 · m.12</td></tr>
+          <tr><td>Aydınlatma bağlantısı</td><td>KVKK aydınlatma metni, gizlilik veya çerez politikası bağlantısı.</td><td>KVKK m.10 · GDPR m.13</td></tr>
+          <tr><td>Yurt dışına aktarım</td><td>Üçüncü taraf sağlayıcı ve alan adı envanteri; Google Fonts gibi IP adresi aktaran kaynaklar.</td><td>KVKK m.9 · GDPR Bölüm V</td></tr>
+          <tr><td>Güvensiz bağlantı</td><td><code>http://</code> üzerinden yüklenen kaynaklar ve form gönderimleri.</td><td>KVKK m.12</td></tr>
+          <tr><td>Çerez envanteri (HAR)</td><td>Her çerezin sağlayıcısı, kategorisi ve ömrü; 13 aydan uzun yaşayanlar; Consent Mode <code>gcs</code> durumu.</td><td>KVKK Çerez Rehberi</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec faq" id="sss" aria-labelledby="sss-h">
+    <div class="sec-h"><h2 id="sss-h">Sık sorulanlar</h2></div>
+    <details><summary>Neden adres yazıp tarayamıyorum?</summary><p>Tarayıcılar bir sayfanın başka bir siteyi açıp okumasına güvenlik nedeniyle izin vermez. Perde bu yüzden kaynağı ya da ağ kaydını sizden alır. Karşılığında hiçbir şey sunucuya gitmez; taradığınız kod ve çerezler tarayıcınızda kalır.</p></details>
+    <details><summary>HTML mi, HAR mı?</summary><p>HTML kaynağı hızlıdır ve hangi betiklerin onaya bağlı olduğunu gösterir. HAR kaydı ise sayfanın gerçekte ne yaptığını gösterir: hangi çerezlerin yazıldığını, hangi sunuculara kaç istek gittiğini ve isteklerin içinde kişisel veri olup olmadığını. İkisini birlikte kullanmak en iyisidir.</p></details>
+    <details><summary>Banner KVKK'ya uygun mu?</summary><p>Banner, KVKK Çerez Rehberi'nde ve AB uygulamasında beklenen ilkelere göre tasarlandı: kutular işaretsiz gelir, Reddet ile Kabul et aynı görünürlüktedir, kategoriler ayrı ayrı seçilebilir ve onay her zaman geri alınabilir. Tam uyum ayrıca aydınlatma metninize, veri envanterinize ve sözleşmelerinize bağlıdır. Bu sayfa hukuki görüş değildir.</p></details>
+    <details><summary>Onay kayıtları nerede saklanıyor?</summary><p>Ziyaretçinin tarayıcısında, <code>perde-consent</code> anahtarıyla: sürüm, bölge, kategori seçimleri, zaman damgası ve rastgele bir kayıt numarası. Kendi sunucunuzda da tutmak isterseniz Gelişmiş bölümünden bir kayıt adresi girin.</p></details>
+    <details><summary>Ziyaretçi onayını geri çekince ne olur?</summary><p>Daha önce açılmış bir kategori kapatıldığında sayfa yeniden yüklenir. Böylece o kategorideki betikler o andan itibaren çalışmaz.</p></details>
+  </section>
+
+  <footer class="foot">
+    <span>Perde · tarayıcıda çalışan gizlilik denetimi</span>
+    <span>Bu araç hukuki görüş yerine geçmez.</span>
+  </footer>
+</main>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clip = (s, n = 170) => { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+const OC = '<' + '!--';
+
+/* ------------------------------------------------------------------ */
+/* Consent banner runtime. This exact function is what the builder     */
+/* ships to the visitor's site, and what the live preview runs.        */
+/* ------------------------------------------------------------------ */
+function perdeRuntime(cfg, opt) {
+  "use strict";
+  opt = opt || {};
+  var w = window, d = document, preview = !!opt.preview;
+  var KEY = "perde-consent", T = cfg.text, CATS = cfg.categories.slice();
+  var listeners = [], host = null, wrap = null, shown = null;
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  var store = opt.store || {
+    get: function () { try { return JSON.parse(w.localStorage.getItem(KEY)); } catch (e) { return null; } },
+    set: function (v) { try { if (v) w.localStorage.setItem(KEY, JSON.stringify(v)); else w.localStorage.removeItem(KEY); } catch (e) {} }
+  };
+  function regionOf() {
+    if (cfg.region !== "auto") return cfg.region;
+    var tz = "";
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) {}
+    if (tz === "Europe/Istanbul") return "kvkk";
+    if (tz === "America/Los_Angeles") return "ccpa";
+    return "gdpr";
+  }
+  var region = regionOf(), optOut = region === "ccpa";
+  var gpc = !!(cfg.respectGPC && w.navigator && w.navigator.globalPrivacyControl === true);
+  function blank(v) { var c = {}; for (var i = 0; i < CATS.length; i++) c[CATS[i]] = v; return c; }
+  function initial() { var c = blank(optOut); if (optOut && gpc && CATS.indexOf("marketing") >= 0) c.marketing = false; return c; }
+  var saved = store.get();
+  var decided = !!(saved && saved.v === cfg.version && saved.region === region && saved.choices);
+  var choices = decided ? saved.choices : initial();
+  var applied = blank(false);
+
+  function cm(c) {
+    function g(k, fallback) { return CATS.indexOf(k) < 0 ? fallback : (c[k] ? "granted" : "denied"); }
+    var m = g("marketing", "denied"), f = g("functional", "granted");
+    return { analytics_storage: g("analytics", "denied"), ad_storage: m, ad_user_data: m, ad_personalization: m, functionality_storage: f, personalization_storage: f, security_storage: "granted" };
+  }
+  function gtag() { if (preview) return; w.dataLayer = w.dataLayer || []; w.dataLayer.push(arguments); }
+  if (cfg.consentMode) { var def = cm(choices); def.wait_for_update = 500; gtag("consent", "default", def); }
+
+  function unblock(c) {
+    if (preview) return;
+    var list = d.querySelectorAll('script[type="text/plain"][data-perde]');
+    for (var i = 0; i < list.length; i++) {
+      var n = list[i], cat = n.getAttribute("data-perde");
+      if (n.getAttribute("data-perde-done") || !c[cat]) continue;
+      var s = d.createElement("script");
+      for (var j = 0; j < n.attributes.length; j++) {
+        var a = n.attributes[j];
+        if (a.name !== "type" && a.name !== "data-perde") s.setAttribute(a.name, a.value);
+      }
+      if (n.hasAttribute("src")) s.async = false; else s.text = n.text;
+      n.setAttribute("data-perde-done", "1");
+      n.parentNode.insertBefore(s, n.nextSibling);
+    }
+  }
+  function whenReady(fn) { if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", fn); else fn(); }
+  function apply(c) { for (var k in c) applied[k] = applied[k] || !!c[k]; whenReady(function () { unblock(c); }); }
+
+  function rid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+  function save(c, how) {
+    var revoked = false;
+    for (var k in applied) if (applied[k] && !c[k]) revoked = true;
+    choices = c; decided = true;
+    var rec = { v: cfg.version, region: region, choices: c, ts: new Date().toISOString(), id: (saved && saved.id) || rid(), via: how };
+    saved = rec; store.set(rec);
+    if (cfg.consentMode) gtag("consent", "update", cm(c));
+    if (cfg.endpoint && !preview && w.navigator.sendBeacon) { try { w.navigator.sendBeacon(cfg.endpoint, JSON.stringify(rec)); } catch (e) {} }
+    for (var i = 0; i < listeners.length; i++) { try { listeners[i](api.get(), rec); } catch (e) {} }
+    if (revoked && !preview) { w.location.reload(); return; }
+    apply(c);
+    render(cfg.showFab ? "fab" : null);
+  }
+
+  function lum(hex) {
+    var h = String(hex).replace("#", "");
+    if (h.length === 3) h = h.replace(/(.)/g, "$1$1");
+    var n = parseInt(h.slice(0, 6), 16); if (isNaN(n)) return 0;
+    function f(x) { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }
+    return 0.2126 * f((n >> 16) & 255) + 0.7152 * f((n >> 8) & 255) + 0.0722 * f(n & 255);
+  }
+  var accent = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(cfg.accent) ? cfg.accent : "#7a1f4e";
+  var accentInk = lum(accent) > 0.179 ? "#141414" : "#ffffff";
+  function css() {
+    var r = Math.max(0, Math.min(24, +cfg.radius || 0));
+    var dark = "--bg:#1c1b20;--fg:#f2f1f4;--mu:#b0aeb8;--ln:#3a3840;";
+    return ":host{all:initial}" +
+      ".w{--a:" + accent + ";--ai:" + accentInk + ";--r:" + r + "px;--bg:#ffffff;--fg:#18171c;--mu:#56545d;--ln:#dedce3;font:14px/1.5 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:var(--fg)}" +
+      ".w.dark{" + dark + "}@media (prefers-color-scheme:dark){.w.auto{" + dark + "}}" +
+      ".pos{position:fixed;z-index:2147483000}.w.abs .pos{position:absolute}" +
+      ".card{background:var(--bg);color:var(--fg);border:1px solid var(--ln);box-shadow:0 12px 40px rgba(0,0,0,.18);box-sizing:border-box}" +
+      ".bar{left:0;right:0;bottom:0;border-radius:var(--r) var(--r) 0 0;padding:16px 20px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}" +
+      ".bar .tx{flex:1 1 300px;min-width:0}" +
+      ".box{left:16px;bottom:16px;width:min(380px,calc(100% - 32px));border-radius:var(--r);padding:18px}" +
+      ".ov{inset:0;background:rgba(12,10,16,.5);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}" +
+      ".modal{position:relative;width:min(460px,100%);border-radius:var(--r);padding:22px;max-height:100%;overflow:auto}" +
+      "h2{font-size:16px;line-height:1.3;margin:0 0 6px;font-weight:700}" +
+      "p{margin:0;color:var(--mu)}a{color:inherit;text-decoration:underline;text-underline-offset:2px}" +
+      ".ac{display:flex;flex-wrap:wrap;gap:8px}.box .ac,.modal .ac{margin-top:14px}.ac .b{flex:1 1 auto}" +
+      ".b{font:inherit;font-weight:600;font-size:14px;padding:9px 14px;border-radius:" + Math.max(4, r - 4) + "px;border:1px solid var(--a);cursor:pointer;line-height:1.2;box-sizing:border-box}" +
+      ".s{background:var(--a);color:var(--ai)}.g{background:var(--bg);color:var(--fg);border-color:var(--ln)}" +
+      ".b:focus-visible,.sw:focus-visible{outline:2px solid var(--a);outline-offset:2px}" +
+      ".rows{margin:14px 0 0;display:grid;gap:8px}" +
+      ".row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:11px 12px;border:1px solid var(--ln);border-radius:" + Math.max(4, r - 4) + "px;cursor:pointer}" +
+      ".row b{font-weight:600}.row small{grid-column:1/-1;color:var(--mu);font-size:13px}.row em{font-style:normal;font-size:12px;color:var(--mu)}" +
+      ".sw{appearance:none;-webkit-appearance:none;width:40px;height:22px;border-radius:11px;background:var(--ln);position:relative;cursor:pointer;margin:0;transition:background .15s}" +
+      ".sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}" +
+      ".sw:checked{background:var(--a)}.sw:checked::after{transform:translateX(18px)}" +
+      ".fab{left:16px;bottom:16px;border-radius:999px;padding:8px 14px}" +
+      ".note{margin-top:10px;font-size:13px}" +
+      "@media (prefers-reduced-motion:reduce){.sw,.sw::after{transition:none}}";
+  }
+  function bannerHTML() {
+    var pol = cfg.policyUrl && /^(https?:\/\/|\/)/i.test(cfg.policyUrl) ? ' <a href="' + esc(cfg.policyUrl) + '" target="_blank" rel="noopener">' + esc(T.policyLabel) + "</a>" : "";
+    var head, acts;
+    if (optOut) {
+      head = "<h2 id='pt'>" + esc(T.ccpaTitle) + "</h2><p id='pd'>" + esc(T.ccpaDesc) + pol + "</p>" + (gpc ? "<p class='note'>" + esc(T.gpcNote) + "</p>" : "");
+      acts = "<button class='b g' data-a='prefs'>" + esc(T.customize) + "</button><button class='b s' data-a='optout'>" + esc(T.ccpaOptOut) + "</button><button class='b s' data-a='ok'>" + esc(T.ok) + "</button>";
+    } else {
+      head = "<h2 id='pt'>" + esc(T.title) + "</h2><p id='pd'>" + esc(T.desc) + pol + "</p>";
+      acts = "<button class='b g' data-a='prefs'>" + esc(T.customize) + "</button><button class='b s' data-a='reject'>" + esc(T.reject) + "</button><button class='b s' data-a='accept'>" + esc(T.accept) + "</button>";
+    }
+    var inner = "<div class='tx'>" + head + "</div><div class='ac'>" + acts + "</div>";
+    var aria = " role='dialog' aria-labelledby='pt' aria-describedby='pd'";
+    if (cfg.position === "modal") return "<div class='pos ov'><div class='card modal'" + aria + " aria-modal='true'>" + inner + "</div></div>";
+    return "<div class='pos card " + (cfg.position === "box" ? "box" : "bar") + "'" + aria + ">" + inner + "</div>";
+  }
+  function prefsHTML() {
+    var nec = T.necessary || { name: "", desc: "" };
+    var rows = "<div class='row'><b>" + esc(nec.name) + "</b><em>" + esc(T.alwaysOn) + "</em><small>" + esc(nec.desc) + "</small></div>";
+    for (var i = 0; i < CATS.length; i++) {
+      var k = CATS[i], t = T[k] || { name: k, desc: "" };
+      rows += "<label class='row'><b>" + esc(t.name) + "</b><input type='checkbox' class='sw' role='switch' data-k='" + esc(k) + "'" + (choices[k] ? " checked" : "") + "><small>" + esc(t.desc) + "</small></label>";
+    }
+    return "<div class='pos ov'><div class='card modal' role='dialog' aria-modal='true' aria-labelledby='pt2'><h2 id='pt2'>" + esc(T.prefsTitle) + "</h2><p>" + esc(T.prefsDesc) + "</p><div class='rows'>" + rows +
+      "</div><div class='ac'><button class='b s' data-a='reject'>" + esc(T.rejectAll) + "</button><button class='b g' data-a='save'>" + esc(T.save) + "</button><button class='b s' data-a='accept'>" + esc(T.acceptAll) + "</button></div></div></div>";
+  }
+  function ensure() {
+    if (host) return;
+    host = d.createElement("div");
+    host.setAttribute("data-perde-ui", "");
+    var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
+    var th = cfg.theme === "dark" ? "dark" : cfg.theme === "light" ? "light" : "auto";
+    root.innerHTML = "<style>" + css() + "</style><div class='w " + th + (preview ? " abs" : "") + "'></div>";
+    wrap = root.querySelector(".w");
+    wrap.addEventListener("click", onClick);
+    wrap.addEventListener("keydown", function (e) { if (e.key === "Escape" && shown === "prefs") render(decided ? (cfg.showFab ? "fab" : null) : "banner"); });
+    (opt.root || d.body).appendChild(host);
+  }
+  function render(what) {
+    ensure(); shown = what;
+    wrap.innerHTML = what === "banner" ? bannerHTML() : what === "prefs" ? prefsHTML() : what === "fab" ? "<button class='pos card b g fab' data-a='prefs'>" + esc(T.fab) + "</button>" : "";
+    if (!preview && (what === "prefs" || (what === "banner" && cfg.position === "modal"))) {
+      var f = wrap.querySelector("button, input"); if (f) f.focus({ preventScroll: true });
+    }
+  }
+  function onClick(e) {
+    var t = e.target && e.target.closest ? e.target.closest("[data-a]") : null; if (!t) return;
+    var a = t.getAttribute("data-a"), k, c;
+    if (a === "accept") save(blank(true), "accept");
+    else if (a === "reject") save(blank(false), "reject");
+    else if (a === "prefs") render("prefs");
+    else if (a === "save") {
+      c = blank(false); var sws = wrap.querySelectorAll("input[data-k]");
+      for (var i = 0; i < sws.length; i++) c[sws[i].getAttribute("data-k")] = sws[i].checked;
+      save(c, "custom");
+    } else if (a === "optout") { c = {}; for (k in choices) c[k] = choices[k]; if ("marketing" in c) c.marketing = false; save(c, "optout"); }
+    else if (a === "ok") save(choices, "ack");
+  }
+
+  if (decided || optOut) apply(choices);
+  function start() { render(decided ? (cfg.showFab ? "fab" : null) : "banner"); }
+  if (opt.root || d.body) start(); else whenReady(start);
+
+  var api = {
+    region: region,
+    open: function () { render("prefs"); },
+    get: function () { var o = {}; for (var k in choices) o[k] = !!choices[k]; return o; },
+    on: function (fn) { if (typeof fn === "function") listeners.push(fn); },
+    reset: function () { store.set(null); saved = null; decided = false; choices = initial(); render("banner"); },
+    destroy: function () { if (host && host.parentNode) host.parentNode.removeChild(host); host = null; }
+  };
+  if (!preview) w.perde = api;
+  return api;
+}
+
+/* ------------------------------------------------------------------ */
+/* Knowledge base                                                       */
+/* ------------------------------------------------------------------ */
+const CAT = {
+  analytics:  { label: 'Analitik',          consent: 'analytics',  need: true },
+  replay:     { label: 'Oturum kaydı',      consent: 'analytics',  need: true },
+  marketing:  { label: 'Pazarlama',         consent: 'marketing',  need: true },
+  embed:      { label: 'Gömülü içerik',     consent: 'functional', need: true },
+  functional: { label: 'İşlevsel',          consent: 'functional', need: 'soft' },
+  tagmanager: { label: 'Etiket yöneticisi', consent: 'analytics',  need: 'soft' },
+  monitoring: { label: 'Hata izleme',       consent: 'functional', need: 'soft' },
+  necessary:  { label: 'Zorunlu',           need: false },
+  cookieless: { label: 'Çerezsiz analitik', need: false },
+  cdn:        { label: 'Altyapı / CDN',     need: false },
+  unknown:    { label: 'Sınıflandırılmamış', need: null }
+};
+
+const VENDORS = [
+  { id:'recaptcha', name:'Google reCAPTCHA', cat:'functional', paths:[['google.com','/recaptcha'],['gstatic.com','/recaptcha']], hosts:['recaptcha.net'] },
+  { id:'gads', name:'Google Ads', cat:'marketing', hosts:['googleadservices.com','doubleclick.net','googlesyndication.com','adservice.google.com'], paths:[['google.com','/pagead'],['google.com','/ads']], inline:[/gtag\(\s*['"]config['"]\s*,\s*['"]AW-/, /googletag\.cmd/] },
+  { id:'gmaps', name:'Google Maps', cat:'embed', hosts:['maps.googleapis.com','maps.gstatic.com'], paths:[['google.com','/maps']] },
+  { id:'ga4', name:'Google Analytics', cat:'analytics', hosts:['google-analytics.com','analytics.google.com'], inline:[/gtag\(\s*['"]config['"]\s*,\s*['"]G-/, /\bga\(\s*['"]create['"]/] },
+  { id:'gtm', name:'Google Tag Manager', cat:'tagmanager', hosts:['googletagmanager.com'], inline:[/\bGTM-[A-Z0-9]{4,}\b/] },
+  { id:'gfonts', name:'Google Fonts', cat:'cdn', hosts:['fonts.googleapis.com','fonts.gstatic.com'] },
+  { id:'ytnc', name:'YouTube (çerezsiz mod)', cat:'cdn', hosts:['youtube-nocookie.com'] },
+  { id:'youtube', name:'YouTube', cat:'embed', hosts:['youtube.com','ytimg.com','googlevideo.com','youtu.be'] },
+  { id:'meta', name:'Meta Pixel', cat:'marketing', hosts:['facebook.net','facebook.com','fbcdn.net'], inline:[/\bfbq\(\s*['"]init['"]/] },
+  { id:'hotjar', name:'Hotjar', cat:'replay', hosts:['hotjar.com','hotjar.io'], inline:[/_hjSettings/] },
+  { id:'clarity', name:'Microsoft Clarity', cat:'replay', hosts:['clarity.ms'] },
+  { id:'bing', name:'Microsoft Advertising', cat:'marketing', hosts:['bat.bing.com','bat.bing.net'], inline:[/\buetq\b/] },
+  { id:'linkedin', name:'LinkedIn Insight', cat:'marketing', hosts:['licdn.com','ads.linkedin.com','linkedin.com'], inline:[/_linkedin_partner_id|_linkedin_data_partner_ids/] },
+  { id:'tiktok', name:'TikTok Pixel', cat:'marketing', hosts:['analytics.tiktok.com','tiktok.com'], inline:[/\bttq\.(load|page)\b/] },
+  { id:'twitter', name:'X (Twitter) Pixel', cat:'marketing', hosts:['ads-twitter.com','analytics.twitter.com','t.co'], inline:[/\btwq\(/] },
+  { id:'pinterest', name:'Pinterest Tag', cat:'marketing', hosts:['ct.pinterest.com','s.pinimg.com'], inline:[/\bpintrk\(/] },
+  { id:'snap', name:'Snap Pixel', cat:'marketing', hosts:['sc-static.net','tr.snapchat.com'], inline:[/\bsnaptr\(/] },
+  { id:'criteo', name:'Criteo', cat:'marketing', hosts:['criteo.com','criteo.net'], inline:[/criteo_q/] },
+  { id:'taboola', name:'Taboola', cat:'marketing', hosts:['taboola.com'] },
+  { id:'outbrain', name:'Outbrain', cat:'marketing', hosts:['outbrain.com'] },
+  { id:'yandex', name:'Yandex Metrica', cat:'analytics', hosts:['mc.yandex.ru','mc.yandex.com','mc.webvisor.org'], inline:[/\bym\(\s*\d+\s*,\s*['"]init/] },
+  { id:'segment', name:'Segment', cat:'analytics', hosts:['segment.com','segment.io'], inline:[/analytics\.load\(/] },
+  { id:'mixpanel', name:'Mixpanel', cat:'analytics', hosts:['mixpanel.com','mxpnl.com'], inline:[/mixpanel\.init\(/] },
+  { id:'amplitude', name:'Amplitude', cat:'analytics', hosts:['amplitude.com'], inline:[/amplitude\.(init|getInstance)\(/] },
+  { id:'posthog', name:'PostHog', cat:'analytics', hosts:['posthog.com'], inline:[/posthog\.init\(/] },
+  { id:'heap', name:'Heap', cat:'analytics', hosts:['heapanalytics.com','heap-api.com'], inline:[/heap\.load\(/] },
+  { id:'fullstory', name:'FullStory', cat:'replay', hosts:['fullstory.com'], inline:[/_fs_org/] },
+  { id:'crazyegg', name:'Crazy Egg', cat:'replay', hosts:['crazyegg.com'] },
+  { id:'hubspot', name:'HubSpot', cat:'marketing', hosts:['hs-scripts.com','hs-analytics.net','hsforms.net','hubspot.com','hs-banner.com','hscollectedforms.net','hsadspixel.net'], inline:[/\b_hsq\b/] },
+  { id:'klaviyo', name:'Klaviyo', cat:'marketing', hosts:['klaviyo.com'] },
+  { id:'mailchimp', name:'Mailchimp', cat:'marketing', hosts:['chimpstatic.com','list-manage.com'] },
+  { id:'insider', name:'Insider', cat:'marketing', hosts:['useinsider.com'] },
+  { id:'segmentify', name:'Segmentify', cat:'marketing', hosts:['segmentify.com'] },
+  { id:'euromessage', name:'Euromessage', cat:'marketing', hosts:['euromsg.com','euromsg.net'] },
+  { id:'onesignal', name:'OneSignal', cat:'marketing', hosts:['onesignal.com'] },
+  { id:'intercom', name:'Intercom', cat:'functional', hosts:['intercom.io','intercomcdn.com','intercomassets.com'], inline:[/intercomSettings|Intercom\(\s*['"]boot/] },
+  { id:'zendesk', name:'Zendesk', cat:'functional', hosts:['zdassets.com','zopim.com','zendesk.com'] },
+  { id:'tawk', name:'tawk.to', cat:'functional', hosts:['tawk.to'] },
+  { id:'crisp', name:'Crisp', cat:'functional', hosts:['crisp.chat'], inline:[/CRISP_WEBSITE_ID/] },
+  { id:'vimeo', name:'Vimeo', cat:'embed', hosts:['vimeo.com','vimeocdn.com'] },
+  { id:'sentry', name:'Sentry', cat:'monitoring', hosts:['sentry.io','sentry-cdn.com'], inline:[/Sentry\.init\(/] },
+  { id:'datadog', name:'Datadog RUM', cat:'monitoring', hosts:['datadoghq-browser-agent.com','browser-intake-datadoghq.com','browser-intake-datadoghq.eu'], inline:[/DD_RUM/] },
+  { id:'newrelic', name:'New Relic', cat:'monitoring', hosts:['newrelic.com','nr-data.net'] },
+  { id:'stripe', name:'Stripe', cat:'necessary', hosts:['stripe.com','stripe.network'] },
+  { id:'iyzico', name:'iyzico', cat:'necessary', hosts:['iyzipay.com','iyzico.com'] },
+  { id:'cfinsights', name:'Cloudflare Web Analytics', cat:'cookieless', hosts:['cloudflareinsights.com'] },
+  { id:'plausible', name:'Plausible', cat:'cookieless', hosts:['plausible.io'] },
+  { id:'typekit', name:'Adobe Fonts', cat:'cdn', hosts:['typekit.net'] },
+  { id:'jsdelivr', name:'jsDelivr', cat:'cdn', hosts:['jsdelivr.net'] },
+  { id:'cdnjs', name:'cdnjs', cat:'cdn', hosts:['cdnjs.cloudflare.com'] },
+  { id:'unpkg', name:'unpkg', cat:'cdn', hosts:['unpkg.com'] },
+  { id:'jquery', name:'jQuery CDN', cat:'cdn', hosts:['code.jquery.com'] },
+  { id:'gstatic', name:'Google (statik içerik)', cat:'cdn', hosts:['gstatic.com','googleapis.com'] }
+];
+const V = {}; VENDORS.forEach(v => { V[v.id] = v; });
+
+const CMPS = [
+  ['Cookiebot', ['cookiebot.com','cookiebot.eu'], /Cookiebot/],
+  ['OneTrust', ['cookielaw.org','onetrust.com'], /OptanonWrapper|otSDKStub/],
+  ['Usercentrics', ['usercentrics.eu','usercentrics.com'], /usercentrics/i],
+  ['Didomi', ['privacy-center.org','didomi.io'], /didomiConfig/],
+  ['Quantcast Choice', ['quantcast.com','consensu.org'], null],
+  ['iubenda', ['iubenda.com'], /_iub\b/],
+  ['CookieYes', ['cdn-cookieyes.com','cookieyes.com'], /cookieyes/i],
+  ['Osano', ['osano.com'], null],
+  ['Termly', ['termly.io'], null],
+  ['Cookie Script', ['cookie-script.com'], null],
+  ['Complianz', [], /complianz|cmplz_/],
+  ['Klaro', [], /klaroConfig/],
+  ['CookieConsent', [], /CookieConsent\.run|initCookieConsent|cookieconsent\.initialise/],
+  ['IAB TCF onay aracı', [], /__tcfapi/],
+  ['Perde', [], /perde-consent/]
+];
+
+const COOKIE_DB = [
+  [/^_ga(_[A-Z0-9]+)?$/, 'Google Analytics', 'analytics'], [/^_gid$/, 'Google Analytics', 'analytics'], [/^_gat/, 'Google Analytics', 'analytics'],
+  [/^_gcl_/, 'Google Ads', 'marketing'], [/^(IDE|DSID|test_cookie)$/, 'Google Ads (DoubleClick)', 'marketing'],
+  [/^(_fbp|_fbc|fr)$/, 'Meta', 'marketing'], [/^_hj/, 'Hotjar', 'replay'],
+  [/^(_clck|_clsk|CLID)$/, 'Microsoft Clarity', 'replay'], [/^(MUID|_uetsid|_uetvid)$/, 'Microsoft Advertising', 'marketing'],
+  [/^(li_fat_id|bcookie|lidc|UserMatchHistory|AnalyticsSyncHistory|li_sugr)$/, 'LinkedIn', 'marketing'],
+  [/^(_ttp|ttwid)$/, 'TikTok', 'marketing'], [/^_pin_unauth$/, 'Pinterest', 'marketing'], [/^_scid/, 'Snapchat', 'marketing'],
+  [/^_ym_/, 'Yandex Metrica', 'analytics'], [/^ajs_(anonymous|user)_id$/, 'Segment', 'analytics'], [/^mp_/, 'Mixpanel', 'analytics'],
+  [/^ph_.*_posthog$/, 'PostHog', 'analytics'], [/^(AMP_|amp_)/, 'Amplitude', 'analytics'],
+  [/^(hubspotutk|__hstc|__hssc|__hssrc)$/, 'HubSpot', 'marketing'], [/^intercom-/, 'Intercom', 'functional'], [/^cto_bundle$/, 'Criteo', 'marketing'],
+  [/^(YSC|VISITOR_INFO1_LIVE|VISITOR_PRIVACY_METADATA|__Secure-YEC|PREF)$/, 'YouTube', 'embed'],
+  [/^(__stripe_mid|__stripe_sid)$/, 'Stripe', 'necessary'],
+  [/^(__cf_bm|cf_clearance|__cflb|_cfuvid)$/, 'Cloudflare', 'necessary'],
+  [/^(PHPSESSID|JSESSIONID|ASP\.NET_SessionId|connect\.sid|laravel_session|sessionid|SESS[a-f0-9]+)$/, 'Oturum çerezi', 'necessary'],
+  [/^(csrftoken|XSRF-TOKEN|_csrf|__RequestVerificationToken)$/, 'Güvenlik (CSRF)', 'necessary'],
+  [/^(perde-consent|CookieConsent|OptanonConsent|OptanonAlertBoxClosed|euconsent-v2|cookieyes-consent|_iub_cs-.*|didomi_token|uc_settings|cmplz_.*)$/, 'Onay kaydı', 'necessary']
+];
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                              */
+/* ------------------------------------------------------------------ */
+const SLD = new Set(['co.uk','org.uk','ac.uk','gov.uk','com.tr','net.tr','org.tr','gov.tr','edu.tr','av.tr','gen.tr','biz.tr','info.tr','bel.tr','k12.tr','web.tr','tv.tr','co.jp','com.au','net.au','com.br','co.nz','co.in','com.mx','co.za']);
+function cleanHost(s) { s = String(s || '').trim().toLowerCase(); if (!s) return ''; return s.replace(/^[a-z]+:\/\//, '').replace(/[\/?#].*$/, '').replace(/:\d+$/, '').replace(/^\.+|\.+$/g, ''); }
+function regDomain(h) {
+  h = cleanHost(h).replace(/^www\./, ''); if (!h) return '';
+  if (/^\d+(\.\d+){3}$/.test(h)) return h;
+  const p = h.split('.').filter(Boolean); if (p.length <= 2) return p.join('.');
+  const l2 = p.slice(-2).join('.'); return SLD.has(l2) ? p.slice(-3).join('.') : l2;
+}
+const hostIs = (h, d) => h === d || h.endsWith('.' + d);
+function toAbs(u) { u = String(u || '').trim(); if (!u || /^(data|blob|javascript|mailto|tel|about):/i.test(u)) return null; if (u.startsWith('//')) return 'https:' + u; if (/^https?:\/\//i.test(u)) return u; return null; }
+function hostOf(u) { try { return new URL(u).hostname.toLowerCase(); } catch (e) { return ''; } }
+function safeDecode(s) { try { return decodeURIComponent(s); } catch (e) { return s; } }
+function vendorFromUrl(u) {
+  let url; try { url = new URL(u); } catch (e) { return null; }
+  const h = url.hostname.toLowerCase(), p = url.pathname || '/';
+  if (hostIs(h, 'googletagmanager.com')) {
+    if (p.startsWith('/gtag/js')) { const id = (url.searchParams.get('id') || '').toUpperCase(); return (id.startsWith('AW-') || id.startsWith('DC-')) ? V.gads : id.startsWith('GTM-') ? V.gtm : V.ga4; }
+    return V.gtm;
+  }
+  for (const v of VENDORS) {
+    if (v.paths && v.paths.some(([d, pp]) => hostIs(h, d) && p.startsWith(pp))) return v;
+    if (v.hosts && v.hosts.some(d => hostIs(h, d))) return v;
+  }
+  return null;
+}
+const vendorFromHost = h => vendorFromUrl('https://' + h + '/');
+function vendorsFromInline(txt) {
+  const out = new Map();
+  for (const v of VENDORS) if (v.inline && v.inline.some(re => re.test(txt))) out.set(v.id, v);
+  for (const m of txt.matchAll(/(?:https?:)?\/\/([a-z0-9-]+(?:\.[a-z0-9-]+)+)(\/[^\s'"`)<>]*)?/gi)) {
+    const v = vendorFromUrl('https://' + m[1] + (m[2] || '/')); if (v) out.set(v.id, v);
+  }
+  return [...out.values()];
+}
+function lineWith(txt, v) {
+  const lines = txt.split('\n');
+  for (const l of lines) {
+    if ((v.inline && v.inline.some(re => re.test(l))) || (v.hosts || []).some(h => l.includes(h)) || (v.paths || []).some(([d, pp]) => l.includes(d + pp))) return clip(l);
+  }
+  return clip(lines.find(l => l.trim()) || '');
+}
+function cmpOf(u, txt) {
+  const h = u ? hostOf(u) : '';
+  for (const [name, hosts, re] of CMPS) {
+    if (h && hosts.some(d => hostIs(h, d))) return name;
+    if (txt && re && re.test(txt)) return name;
+  }
+  return null;
+}
+function tckn(s) {
+  if (!/^[1-9]\d{10}$/.test(s)) return false;
+  const d = [...s].map(Number);
+  const odd = d[0] + d[2] + d[4] + d[6] + d[8], even = d[1] + d[3] + d[5] + d[7];
+  if ((((odd * 7 - even) % 10) + 10) % 10 !== d[9]) return false;
+  return d.slice(0, 10).reduce((a, b) => a + b, 0) % 10 === d[10];
+}
+const BAD_TLD = /^(png|jpe?g|gif|svg|webp|avif|js|mjs|css|ico|woff2?|ttf|map|json)$/i;
+function piiScan(text) {
+  const hits = []; if (!text) return hits; let m;
+  const reE = /[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.([A-Z]{2,24})\b/gi;
+  while ((m = reE.exec(text))) { if (!BAD_TLD.test(m[1])) hits.push({ type: 'email', value: m[0] }); }
+  for (const re of [/(?:\+|00)90[\s.-]?\(?5\d{2}\)?[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}(?!\d)/g, /(?<![\d+])0[\s.-]?\(?5\d{2}\)?[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}(?!\d)/g]) {
+    while ((m = re.exec(text))) hits.push({ type: 'phone', value: m[0] });
+  }
+  const reT = /(?<!\d)[1-9]\d{10}(?!\d)/g;
+  while ((m = reT.exec(text))) if (tckn(m[0])) hits.push({ type: 'tckn', value: m[0] });
+  const seen = new Set();
+  return hits.filter(h => { const k = h.type + ':' + (h.type === 'email' ? h.value.toLowerCase() : h.value.replace(/\D/g, '')); if (seen.has(k)) return false; seen.add(k); return true; });
+}
+function mask(h) {
+  if (h.type === 'email') { const i = h.value.indexOf('@'); return h.value[0] + '•••' + h.value.slice(i); }
+  const dg = h.value.replace(/\D/g, '');
+  if (h.type === 'phone') return '+90 5•• ••• •• ' + dg.slice(-2);
+  return dg.slice(0, 2) + '•••••••' + dg.slice(-2);
+}
+const PII = { email: ['e-posta adresi', 'E-posta adresi'], phone: ['cep telefonu numarası', 'Cep telefonu numarası'], tckn: ['TC kimlik numarası', 'TC kimlik numarası'] };
+function lineFor(txt, h) { const line = txt.split('\n').find(l => l.includes(h.value)) || h.value; return clip(line.split(h.value).join(mask(h))); }
+function ctxFor(text, h) {
+  const i = text.indexOf(h.value); if (i < 0) return mask(h);
+  const a = Math.max(0, i - 70), b = i + h.value.length;
+  return clip((a > 0 ? '…' : '') + text.slice(a, i) + mask(h) + text.slice(b, b + 40) + (b + 40 < text.length ? '…' : ''), 200);
+}
+function classifyCookie(name, dom) {
+  for (const [re, vendor, cat] of COOKIE_DB) if (re.test(name)) return { vendor, cat };
+  const v = dom ? vendorFromHost(dom) : null;
+  if (v) return { vendor: v.name, cat: v.cat };
+  return { vendor: '', cat: 'unknown' };
+}
+function parseSetCookie(str, reqHost, tAbs) {
+  const parts = str.split(';').map(s => s.trim());
+  const nv = parts.shift() || ''; const eq = nv.indexOf('=');
+  const name = (eq < 0 ? nv : nv.slice(0, eq)).trim();
+  let domain = reqHost, maxAge = null, expires = null;
+  for (const a of parts) {
+    const i = a.indexOf('='); const k = (i < 0 ? a : a.slice(0, i)).trim().toLowerCase(); const v = i < 0 ? '' : a.slice(i + 1).trim();
+    if (k === 'domain' && v) domain = v.replace(/^\./, ''); else if (k === 'max-age') maxAge = Number(v); else if (k === 'expires') expires = Date.parse(v);
+  }
+  let life = null;
+  if (maxAge != null && !isNaN(maxAge)) life = maxAge * 1000; else if (expires != null && !isNaN(expires)) life = expires - tAbs;
+  return { name, domain, life };
+}
+function lifeStr(c) {
+  if (c.kind === 'session') return 'Oturum';
+  if (c.kind === 'unknown' || c.life == null) return 'Betikle yazılmış';
+  const ms = c.life; if (ms <= 0) return 'Silindi';
+  const m = ms / 60000; if (m < 60) return Math.max(1, Math.round(m)) + ' dk';
+  const h = m / 60; if (h < 48) return Math.round(h) + ' saat';
+  const dd = h / 24; if (dd < 60) return Math.round(dd) + ' gün';
+  const mo = dd / 30.44; if (mo < 24) return Math.round(mo) + ' ay';
+  return (dd / 365).toFixed(1).replace('.', ',') + ' yıl';
+}
+const msStr = x => x < 1000 ? Math.round(x) + ' ms' : (x / 1000).toFixed(1).replace('.', ',') + ' sn';
+function kb(b) { if (b >= 1048576) return (b / 1048576).toFixed(1).replace('.', ',') + ' MB'; if (b >= 1024) return (b / 1024).toFixed(b < 10240 ? 1 : 0).replace('.', ',') + ' KB'; return b + ' B'; }
+const fmtDate = d => new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+function gateExample(r) {
+  const cat = (CAT[r.v.cat] && CAT[r.v.cat].consent) || 'analytics';
+  const ev = r.ev[0] || ''; const m = ev.match(/src="([^"]+)"/);
+  if (m && ev.startsWith('<script')) return `<script type="text/plain" data-perde="${cat}" src="${m[1]}"><\/script>`;
+  return `<script type="text/plain" data-perde="${cat}">\n  /* ${r.v.name} kurulum kodunuz değişmeden buraya */\n<\/script>`;
+}
+const CM_SNIPPET = `<script>\n  window.dataLayer = window.dataLayer || [];\n  function gtag(){dataLayer.push(arguments);}\n  gtag('consent', 'default', {\n    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',\n    analytics_storage: 'denied', wait_for_update: 500\n  });\n<\/script>`;
+
+/* ------------------------------------------------------------------ */
+/* HTML scan                                                            */
+/* ------------------------------------------------------------------ */
+function scanHTML(src, domainInput) {
+  const doc = new DOMParser().parseFromString(src, 'text/html');
+  let fp = cleanHost(domainInput);
+  if (!fp) {
+    const c = doc.querySelector('link[rel~="canonical"][href], meta[property="og:url"][content], base[href]');
+    const u = c && toAbs(c.getAttribute('href') || c.getAttribute('content'));
+    fp = u ? hostOf(u) : '';
+  }
+  const fpReg = regDomain(fp);
+  const isThird = h => !!h && (!fpReg || regDomain(h) !== fpReg);
+  const vend = new Map(), doms = new Map(), F = [];
+  const insecure = [], pii = [], nos = [], embeds = [];
+  let cmp = null, cmDenied = false, gated = 0, scripts = 0;
+
+  const touch = (u, how) => {
+    const h = hostOf(u); if (!isThird(h)) return;
+    const r = doms.get(h) || { host: h, count: 0, how: new Set(), vendor: vendorFromUrl(u) };
+    r.count++; r.how.add(how); if (!r.vendor) r.vendor = vendorFromUrl(u); doms.set(h, r);
+  };
+  const addV = (v, how, isGated, ev, noscript) => {
+    const r = vend.get(v.id) || { v, how: new Set(), gated: 0, open: 0, noscript: 0, ev: [] };
+    r.how.add(how); if (noscript) r.noscript++; else if (isGated) r.gated++; else r.open++;
+    if (ev && r.ev.length < 3 && !r.ev.includes(ev)) r.ev.push(ev);
+    vend.set(v.id, r);
+  };
+  const EXEC = new Set(['', 'text/javascript', 'application/javascript', 'module', 'text/ecmascript', 'application/ecmascript', 'text/jscript']);
+  const DATA = new Set(['application/ld+json', 'application/json', 'importmap', 'speculationrules', 'text/template', 'text/x-template']);
+
+  for (const s of doc.querySelectorAll('script')) {
+    const type = (s.getAttribute('type') || '').trim().toLowerCase();
+    if (DATA.has(type)) continue;
+    scripts++;
+    const isGated = !EXEC.has(type);
+    if (isGated) gated++;
+    const srcA = s.getAttribute('src');
+    if (srcA) {
+      const u = toAbs(srcA); if (!u) continue;
+      touch(u, 'betik');
+      if (/^http:/i.test(u)) insecure.push(clip(`<script src="${srcA}">`));
+      const c = cmpOf(u, ''); if (c) cmp = cmp || c;
+      const v = vendorFromUrl(u);
+      if (v) addV(v, 'betik', isGated, clip(`<script${type ? ` type="${type}"` : ''} src="${srcA}">`));
+    } else {
+      const txt = s.textContent || ''; if (!txt.trim()) continue;
+      const c = cmpOf('', txt); if (c) cmp = cmp || c;
+      if (/gtag\s*\(\s*['"]consent['"]\s*,\s*['"]default['"][\s\S]{0,600}?denied/.test(txt)) cmDenied = true;
+      const vs = vendorsFromInline(txt);
+      vs.forEach(v => addV(v, 'satır içi', isGated, lineWith(txt, v)));
+      for (const m of txt.matchAll(/(?:https?:)?\/\/([a-z0-9-]+(?:\.[a-z0-9-]+)+)/gi)) touch('https://' + m[1] + '/', 'betik içinde');
+      const trackers = vs.filter(v => CAT[v.cat] && CAT[v.cat].need === true);
+      piiScan(txt).forEach(h => pii.push({ ...h, trackers: trackers.map(v => v.name), gated: isGated, line: lineFor(txt, h) }));
+    }
+  }
+  for (const el of doc.querySelectorAll('img[src], iframe[src], embed[src], video[src], audio[src], source[src], object[data]')) {
+    const raw = el.getAttribute('src') || el.getAttribute('data'); const u = toAbs(raw); if (!u) continue;
+    const tag = el.tagName.toLowerCase(); const inNo = !!el.closest('noscript');
+    touch(u, tag === 'img' ? 'görsel' : tag);
+    if (/^http:/i.test(u)) insecure.push(clip(`<${tag} src="${raw}">`));
+    const v = vendorFromUrl(u); if (!v) continue;
+    const how = (tag === 'img' ? 'piksel' : tag) + (inNo ? ' (noscript)' : '');
+    const ev = clip(`${inNo ? '<noscript>' : ''}<${tag} src="${raw}">`);
+    addV(v, how, false, ev, inNo);
+    if (inNo && CAT[v.cat] && CAT[v.cat].need) nos.push({ v, ev });
+    if (tag === 'iframe' && !inNo && v.cat === 'embed') embeds.push({ v, raw });
+  }
+  for (const l of doc.querySelectorAll('link[href]')) {
+    const rel = (l.getAttribute('rel') || '').toLowerCase(); if (/canonical|alternate|manifest/.test(rel)) continue;
+    const href = l.getAttribute('href'); const u = toAbs(href); if (!u) continue;
+    const sheet = /stylesheet/.test(rel);
+    touch(u, sheet ? 'stil' : (rel || 'bağlantı'));
+    if (!sheet) continue;
+    if (/^http:/i.test(u)) insecure.push(clip(`<link rel="stylesheet" href="${href}">`));
+    const v = vendorFromUrl(u); if (v) addV(v, 'stil', false, clip(`<link rel="stylesheet" href="${href}">`));
+  }
+  for (const st of doc.querySelectorAll('style')) {
+    for (const m of (st.textContent || '').matchAll(/@import\s+(?:url\()?\s*['"]?([^'")\s;]+)/gi)) {
+      const u = toAbs(m[1]); if (!u) continue; touch(u, 'stil');
+      const v = vendorFromUrl(u); if (v) addV(v, 'stil (@import)', false, clip(m[0]));
+    }
+  }
+  for (const f of doc.querySelectorAll('form[action]')) { const a = f.getAttribute('action'); if (/^http:\/\//i.test(a)) insecure.push(clip(`<form action="${a}">`)); }
+  const policy = [...doc.querySelectorAll('a[href]')].find(a => /gizlilik|kvkk|ayd[ıi]nlatma|privacy|[çc]erez|cookie|ki[şs]isel.?veri/i.test((a.textContent || '') + ' ' + a.getAttribute('href')));
+
+  /* findings */
+  const list = [...vend.values()];
+  const googleIds = new Set(['ga4', 'gads', 'gtm']);
+  for (const r of list) {
+    const c = CAT[r.v.cat]; if (!c || !c.need || r.v.cat === 'embed' || !r.open) continue;
+    const mit = cmDenied && googleIds.has(r.v.id);
+    if (r.v.id === 'gtm') {
+      if (mit) F.push({ sev: 'ok', title: 'Google Tag Manager Consent Mode ile yükleniyor', body: 'GTM\'den önce Consent Mode varsayılanı "denied" olarak ayarlanmış. İçindeki Google etiketleri onay gelene kadar çerez yazmaz.', tag: r.v.name });
+      else F.push({ sev: 'warn', title: 'Google Tag Manager onay sinyali olmadan yükleniyor', body: 'GTM tek başına çerez yazmaz ama içindeki etiketleri çalıştırır. Consent Mode varsayılanı ayarlanmadığı için GTM\'deki analitik ve reklam etiketleri onay beklemeden çalışabilir.', evidence: r.ev.join('\n'), fix: 'GTM kodundan önce Consent Mode varsayılanını "denied" olarak ayarlayın. Perde banner\'ındaki "Google Consent Mode v2" seçeneği bunu sizin yerinize yapar.', fixCode: CM_SNIPPET, law: 'KVKK m.5 · KVKK Çerez Rehberi', tag: r.v.name });
+      continue;
+    }
+    if (mit) {
+      F.push({ sev: 'warn', title: `${r.v.name} onaysız yükleniyor (Consent Mode açık)`, body: `Consent Mode varsayılanı "denied" olduğu için ${r.v.name} onaydan önce çerez yazmaz, ama IP adresi ve cihaz bilgisi içeren çerezsiz ölçüm sinyalleri gönderir. Bunun için de açık rıza gerekip gerekmediğini değerlendirin.`, evidence: r.ev.join('\n'), fix: 'En katı yaklaşım için betiği tamamen onaya bağlayın.', fixCode: gateExample(r), law: 'KVKK m.5', tag: r.v.name });
+      continue;
+    }
+    const hard = c.need === true;
+    F.push({ sev: hard ? 'crit' : 'warn', title: `${r.v.name} onay alınmadan çalışıyor`, body: `${c.label} kategorisindeki ${r.v.name}, ziyaretçi seçim yapmadan yükleniyor (${[...r.how].join(', ')}). ${hard ? 'Bu tür çerez ve tanımlayıcılar için önceden açık rıza alınması gerekir.' : 'Hizmet sitenin çalışması için zorunlu değilse onaya bağlayın.'}`, evidence: r.ev.join('\n'), fix: 'Betiğin türünü text/plain yapıp kategorisini yazın. Perde, ziyaretçi bu kategoriye onay verdiğinde betiği kendisi çalıştırır.', fixCode: gateExample(r), law: hard ? 'KVKK m.5 (açık rıza) · ePrivacy m.5(3) · GDPR m.6–7' : 'KVKK m.5 · KVKK Çerez Rehberi', tag: r.v.name });
+  }
+  const needVendors = list.filter(r => CAT[r.v.cat] && CAT[r.v.cat].need === true);
+  if (cmp) F.push({ sev: 'ok', title: `Onay aracı bulundu: ${cmp}`, body: 'Sayfada bir çerez onay yönetim aracı yükleniyor. Diğer bulgular, bu aracın izleyicileri gerçekten engelleyip engellemediğini gösterir.', law: 'KVKK Çerez Rehberi' });
+  else if (needVendors.length) F.push({ sev: 'crit', title: 'Çerez onay banner\'ı bulunamadı', body: `Sayfada ${needVendors.length} izleme hizmeti var ama tanınan bir onay yönetim aracı yok. Ziyaretçiye kabul veya ret seçeneği sunulmuyor.`, fix: 'Perde banner\'ını <head> içine ekleyin ve izleyici betiklerini onaya bağlayın.', fixLink: '#banner', law: 'KVKK m.5 · KVKK Çerez Rehberi · GDPR m.7' });
+  else F.push({ sev: 'ok', title: 'Onay gerektiren izleyici yok', body: 'Analitik, reklam veya oturum kaydı hizmeti bulunmadı. Yalnızca zorunlu çerez kullanıyorsanız banner şart değildir; çerezleri yine de aydınlatma metninde açıklayın.' });
+  if (gated && !cmp) F.push({ sev: 'warn', title: 'Onaya bağlanmış betikler hiç çalışmayacak', body: `${gated} betik "text/plain" türüyle beklemeye alınmış, ancak bunları onaydan sonra çalıştıracak bir onay aracı bulunamadı. Bu hizmetler hiçbir ziyaretçide çalışmıyor olabilir.`, evidence: list.filter(r => r.gated).flatMap(r => r.ev.slice(0, 1)).join('\n'), fix: 'Bir onay aracı ekleyin. Perde kullanıyorsanız data-cookieconsent gibi öznitelikleri data-perde ile değiştirin.' });
+  const gatedOnly = list.filter(r => r.gated && !r.open);
+  if (gatedOnly.length) F.push({ sev: 'ok', title: `${gatedOnly.length} hizmet onaya bağlı`, body: gatedOnly.map(r => r.v.name).join(', ') + ' yalnızca onaydan sonra çalışacak şekilde işaretlenmiş.' });
+  if (nos.length) F.push({ sev: 'warn', title: 'noscript etiketleri onaysız çalışıyor', body: 'JavaScript\'i kapalı ziyaretçilerde bu pikseller ve çerçeveler hiçbir onay sorulmadan yüklenir. Onay aracı JavaScript gerektirdiği için bu yolları engelleyemez.', evidence: nos.map(n => n.ev).join('\n'), fix: 'İzleme amaçlı <noscript> piksellerini kaldırın.', law: 'KVKK m.5', tag: [...new Set(nos.map(n => n.v.name))].join(', ') });
+  const yt = embeds.filter(e => e.v.id === 'youtube');
+  if (yt.length) F.push({ sev: 'warn', title: 'YouTube videosu çerezli modda gömülü', body: `${yt.length} YouTube çerçevesi youtube.com üzerinden yükleniyor. Video oynatılmasa bile YouTube ziyaretçinin tarayıcısına çerez yazar.`, evidence: yt.map(e => clip(`<iframe src="${e.raw}">`)).join('\n'), fix: 'Adresi youtube-nocookie.com ile değiştirin ya da videoyu İşlevsel kategorisine onay verildikten sonra yükleyin.', fixCode: `<iframe src="${yt[0].raw.replace(/^(https?:)?\/\/(www\.)?youtube\.com/i, 'https://www.youtube-nocookie.com')}" …></iframe>`, law: 'KVKK m.5', tag: 'YouTube' });
+  const otherEmb = embeds.filter(e => e.v.id !== 'youtube');
+  if (otherEmb.length) F.push({ sev: 'info', title: 'Gömülü üçüncü taraf içerik', body: `${[...new Set(otherEmb.map(e => e.v.name))].join(', ')} çerçevesi sayfa açılır açılmaz yükleniyor ve kendi çerezlerini yazabilir.`, evidence: otherEmb.map(e => clip(`<iframe src="${e.raw}">`)).join('\n'), fix: 'Vimeo için adrese dnt=1 ekleyin; haritalar için "Haritayı göster" düğmesiyle tıklayınca yükleme kullanın.' });
+  if (vend.has('gfonts')) F.push({ sev: 'warn', title: 'Google Fonts Google sunucusundan yükleniyor', body: 'Her sayfa açılışında ziyaretçinin IP adresi Google\'a gider. Münih Bölge Mahkemesi 2022\'de bunu rızasız kişisel veri aktarımı saydı.', evidence: vend.get('gfonts').ev.join('\n'), fix: 'Font dosyalarını indirip kendi sunucunuzdan sunun.', law: 'KVKK m.9 · GDPR Bölüm V', tag: 'Google Fonts' });
+  if (pii.length) {
+    const toTracker = pii.filter(p => p.trackers.length);
+    const types = [...new Set(pii.map(p => PII[p.type][0]))].join(', ');
+    const names = [...new Set(toTracker.flatMap(p => p.trackers))].join(', ');
+    F.push({ sev: toTracker.length ? 'crit' : 'warn', title: toTracker.length ? 'Ziyaretçi kişisel verisi izleme betiğine veriliyor' : 'Sayfa kodunda kişisel veri var', body: toTracker.length ? `Betiklerde ${types} bulundu ve bu değerler ${names} hizmetine parametre olarak aktarılıyor. Bu, sağlayıcıya kişisel veri aktarımıdır ve onay öncesinde gerçekleşiyor.` : `Satır içi betiklerde ${types} bulundu. Bu değerler sayfa kaynağını açan herkese görünür.`, evidence: pii.map(p => p.line).join('\n'), fix: 'Kişisel veriyi izleme betiklerine aktarmayın. Kimlik eşleştirmesi gerçekten gerekiyorsa açık rıza alın ve değeri tarayıcıda SHA-256 ile özetleyerek gönderin.', law: 'KVKK m.4 (ölçülülük) · m.5 · m.12', tag: names });
+  }
+  if (policy) F.push({ sev: 'ok', title: 'Aydınlatma bağlantısı bulundu', body: `"${clip(policy.textContent, 60)}" bağlantısı sayfada yer alıyor.`, evidence: clip(`<a href="${policy.getAttribute('href')}">`), law: 'KVKK m.10' });
+  else F.push({ sev: 'warn', title: 'Aydınlatma metni bağlantısı bulunamadı', body: 'Sayfada KVKK aydınlatma metni, gizlilik politikası veya çerez politikasına giden bir bağlantı yok.', fix: 'Altbilgiye "KVKK Aydınlatma Metni" ve "Çerez Politikası" bağlantılarını ekleyin.', law: 'KVKK m.10 · GDPR m.13' });
+  if (insecure.length) F.push({ sev: 'warn', title: `${insecure.length} güvensiz (http://) bağlantı`, body: 'Bu kaynaklar ve form gönderimleri şifrelenmeden iletiliyor. Formdaki veriler yol üzerindeki herkes tarafından okunabilir.', evidence: insecure.join('\n'), fix: 'Tüm adresleri https:// ile değiştirin.', law: 'KVKK m.12 (veri güvenliği)' });
+  const unknownDoms = [...doms.values()].filter(d => !d.vendor);
+  if (unknownDoms.length) F.push({ sev: 'info', title: `${unknownDoms.length} tanımlanamayan üçüncü taraf alan adı`, body: 'Bu alan adları Perde\'nin sağlayıcı listesinde yok. Ne işe yaradıklarını ve veri alıp almadıklarını kontrol edin.', evidence: unknownDoms.map(d => d.host).join('\n') });
+  if (doms.size) F.push({ sev: 'info', title: `${doms.size} üçüncü taraf alan adına bağlantı`, body: `Sayfa ${list.length} tanınan sağlayıcıyla ve ${doms.size} farklı üçüncü taraf alan adıyla iletişim kuruyor. Bu hizmetler verileri Türkiye dışında işliyorsa aktarım için KVKK m.9'daki dayanaklardan biri (yeterlilik kararı, standart sözleşme vb.) gerekir.`, law: 'KVKK m.9 · GDPR Bölüm V' });
+
+  const vendors = list.map(r => {
+    const c = CAT[r.v.cat] || CAT.unknown; let status;
+    if (r.open && c.need) status = cmDenied && googleIds.has(r.v.id) ? ['CONSENT MODE', 'warn'] : ['ONAYSIZ', c.need === true ? 'crit' : 'warn'];
+    else if (r.open) status = ['SERBEST', 'info'];
+    else if (r.gated) status = ['ONAYA BAĞLI', 'ok'];
+    else status = ['YALNIZ NOSCRIPT', 'info'];
+    return { name: r.v.name, cat: c.label, how: [...r.how].join(', '), status };
+  }).sort((a, b) => ({ crit: 0, warn: 1, info: 2, ok: 3 })[a.status[1]] - ({ crit: 0, warn: 1, info: 2, ok: 3 })[b.status[1]]);
+  const domains = [...doms.values()].sort((a, b) => b.count - a.count).map(d => ({ host: d.host, vendor: d.vendor ? d.vendor.name : '', a: [...d.how].join(', '), b: String(d.count) }));
+  return { source: 'html', domain: fp, findings: F, vendors, domains, cookies: null, stats: { scripts } };
+}
+
+/* ------------------------------------------------------------------ */
+/* HAR scan                                                             */
+/* ------------------------------------------------------------------ */
+function scanHAR(har, domainInput) {
+  const entries = har && har.log && Array.isArray(har.log.entries) ? har.log.entries.slice() : null;
+  if (!entries) throw new Error('Bu dosya HAR biçiminde değil: "log.entries" alanı bulunamadı.');
+  if (!entries.length) throw new Error('HAR dosyasında hiç istek yok. Kaydı başlatıp sayfayı yeniden yükleyin.');
+  entries.sort((a, b) => (Date.parse(a.startedDateTime) || 0) - (Date.parse(b.startedDateTime) || 0));
+  const t0 = Date.parse(entries[0].startedDateTime) || 0;
+  let fp = cleanHost(domainInput);
+  if (!fp) { const docE = entries.find(e => /html/i.test((e.response && e.response.content && e.response.content.mimeType) || '')) || entries[0]; fp = hostOf(docE.request && docE.request.url); }
+  const fpReg = regDomain(fp);
+  const isThird = h => !!h && regDomain(h) !== fpReg;
+  const vend = new Map(), doms = new Map(), cookies = new Map(), F = [];
+  const pii = [], insecure = [], gaGcs = [];
+  let cmp = null, total = 0, third = 0, reqs = 0;
+
+  function addCookie(name, domain, life, kind) {
+    if (!name) return;
+    const dom = cleanHost(domain);
+    const key = name + '|' + regDomain(dom);
+    const ex = cookies.get(key);
+    if (ex) { if (ex.kind === 'unknown' && kind !== 'unknown') { ex.life = life; ex.kind = kind; } return; }
+    cookies.set(key, { name, domain: dom, life, kind, third: isThird(dom), ...classifyCookie(name, dom) });
+  }
+
+  for (const e of entries) {
+    const req = e.request || {}, res = e.response || {};
+    const url = req.url || ''; const h = hostOf(url); if (!h) continue;
+    reqs++;
+    const tAbs = Date.parse(e.startedDateTime) || t0; const t = tAbs - t0;
+    const size = Math.max(0, +res._transferSize > 0 ? +res._transferSize : +res.bodySize > 0 ? +res.bodySize : +((res.content && res.content.size) || 0) || 0);
+    total += size;
+    const v = vendorFromUrl(url);
+    const c = cmpOf(url, ''); if (c) cmp = cmp || c;
+    if (/^http:/i.test(url)) insecure.push(clip(`${req.method || 'GET'} ${url}`));
+    if (isThird(h)) {
+      third += size;
+      const d = doms.get(h) || { host: h, count: 0, bytes: 0, vendor: v }; d.count++; d.bytes += size; doms.set(h, d);
+    }
+    if (v) {
+      const r = vend.get(v.id) || { v, count: 0, first: t, ev: [] };
+      r.count++; r.first = Math.min(r.first, t); if (r.ev.length < 3) r.ev.push(clip(`${req.method || 'GET'} ${url}`)); vend.set(v.id, r);
+      if (v.id === 'ga4' && /\/collect/.test(url)) { try { gaGcs.push(new URL(url).searchParams.get('gcs') || ''); } catch (err) {} }
+    }
+    const setVals = [];
+    (res.headers || []).forEach(hd => { if (String(hd.name).toLowerCase() === 'set-cookie') String(hd.value || '').split('\n').forEach(s => { if (s.trim()) setVals.push(s.trim()); }); });
+    if (Array.isArray(res.cookies) && res.cookies.length) {
+      res.cookies.forEach(ck => { const ex = ck.expires ? Date.parse(ck.expires) : NaN; addCookie(ck.name, ck.domain || h, isNaN(ex) ? null : ex - tAbs, isNaN(ex) ? 'session' : 'exp'); });
+    } else setVals.forEach(s => { const p = parseSetCookie(s, h, tAbs); addCookie(p.name, p.domain, p.life, p.life == null ? 'session' : 'exp'); });
+    let sent = [];
+    if (Array.isArray(req.cookies) && req.cookies.length) sent = req.cookies.map(ck => ck.name);
+    else { const ch = (req.headers || []).find(x => String(x.name).toLowerCase() === 'cookie'); if (ch) sent = String(ch.value).split(';').map(s => s.split('=')[0].trim()).filter(Boolean); }
+    sent.forEach(n => addCookie(n, h, null, 'unknown'));
+    if (isThird(h)) {
+      let text = safeDecode(url);
+      if (req.postData && req.postData.text) text += '\n' + req.postData.text;
+      (req.postData && req.postData.params || []).forEach(p => { text += '\n' + p.name + '=' + safeDecode(p.value || ''); });
+      piiScan(text).forEach(hit => pii.push({ ...hit, host: h, vendor: v ? v.name : h, method: req.method || 'GET', ctx: ctxFor(text, hit) }));
+    }
+  }
+
+  const list = [...vend.values()];
+  const gaMit = gaGcs.length > 0 && gaGcs.every(g => g === 'G100');
+  for (const r of list) {
+    const c = CAT[r.v.cat]; if (!c || !c.need) continue;
+    const mit = gaMit && ['ga4', 'gads', 'gtm'].includes(r.v.id);
+    const sev = mit ? 'warn' : (c.need === true && r.v.cat !== 'embed') ? 'crit' : 'warn';
+    F.push({ sev, title: mit ? `${r.v.name} Consent Mode ile çerezsiz ölçüm yapıyor` : r.v.cat === 'embed' ? `${r.v.name} içeriği onaydan önce yükleniyor` : `${r.v.name} onaydan önce istek gönderiyor`, body: `Kayıt boyunca ${r.v.name} sunucularına ${r.count} istek gitti; ilki sayfa açıldıktan ${msStr(r.first)} sonra. ${mit ? 'İsteklerdeki gcs=G100 parametresi analitik ve reklam depolamasının reddedildiğini gösteriyor.' : 'Kayıt banner\'a dokunulmadan alındıysa bu istekler onaydan önce gitmiş demektir.'}`, evidence: r.ev.join('\n'), fix: mit ? '' : 'Betiği onaya bağlayın veya onay aracınızın bu hizmeti gerçekten engellediğini doğrulayın.', fixCode: mit ? '' : `<script type="text/plain" data-perde="${c.consent}" src="…"><\/script>`, law: 'KVKK m.5 · ePrivacy m.5(3)', tag: r.v.name });
+  }
+  const groups = new Map();
+  pii.forEach(p => { const k = p.vendor + '|' + p.type; const g = groups.get(k) || { ...p, n: 0, ctxs: [] }; g.n++; if (g.ctxs.length < 2) g.ctxs.push(`${p.method} ${p.ctx}`); groups.set(k, g); });
+  for (const g of groups.values()) {
+    F.push({ sev: 'crit', title: `${PII[g.type][1]} ${g.vendor} sunucusuna gidiyor`, body: `${g.n} istekte ${g.host} adresine açık metin ${PII[g.type][0]} gönderildi.${g.type === 'tckn' ? ' TC kimlik numarası hiçbir analitik veya pazarlama aracına gönderilmemeli.' : ''}`, evidence: g.ctxs.join('\n'), fix: g.type === 'tckn' ? 'Bu alanı izleme çağrısından hemen çıkarın ve sağlayıcıdan geçmiş verilerin silinmesini isteyin.' : 'Bu alanı izleme çağrısından çıkarın. Kimlik eşleştirmesi gerekiyorsa açık rıza alın ve değeri tarayıcıda SHA-256 ile özetleyin.', law: 'KVKK m.4 · m.5 · m.9 · m.12', tag: g.vendor });
+  }
+  const ck = [...cookies.values()];
+  const track = ck.filter(c => CAT[c.cat] && CAT[c.cat].need === true);
+  if (track.length) F.push({ sev: 'crit', title: `Onay öncesi ${track.length} izleme çerezi`, body: 'Bu çerezler ziyaretçi seçim yapmadan yazıldı veya sunucuya gönderildi. Analitik, pazarlama ve gömülü içerik çerezleri için önceden açık rıza gerekir.', evidence: track.map(c => `${c.name.padEnd(24)} ${(c.vendor || '').padEnd(18)} ${c.domain.padEnd(22)} ${lifeStr(c)}`).join('\n'), fix: 'İlgili betikleri onaya bağladığınızda bu çerezler de ancak onaydan sonra yazılır.', law: 'KVKK m.5 · KVKK Çerez Rehberi' });
+  const long = track.filter(c => c.kind === 'exp' && c.life > 395 * 864e5);
+  if (long.length) F.push({ sev: 'info', title: `${long.length} çerezin ömrü 13 aydan uzun`, body: 'AB veri koruma otoriteleri (ör. CNIL) onaya dayalı çerezler için en fazla 13 aylık ömür öneriyor.', evidence: long.map(c => `${c.name}  ${lifeStr(c)}`).join('\n') });
+  const unk = ck.filter(c => c.cat === 'unknown' && c.third);
+  if (unk.length) F.push({ sev: 'warn', title: `${unk.length} tanımlanamayan üçüncü taraf çerezi`, body: 'Bu çerezlerin sağlayıcısı ve amacı bilinmiyor. Aydınlatma metninizde açıklanabilmeleri için kaynağını bulun.', evidence: unk.map(c => `${c.name}  ${c.domain}`).join('\n') });
+  const nec = ck.filter(c => c.cat === 'necessary');
+  if (nec.length) F.push({ sev: 'ok', title: `${nec.length} zorunlu çerez`, body: 'Oturum, güvenlik ve onay kaydı gibi onay gerektirmeyen çerezler: ' + nec.map(c => c.name).join(', ') + '.' });
+  const needV = list.filter(r => CAT[r.v.cat] && CAT[r.v.cat].need === true);
+  if (cmp) F.push({ sev: 'ok', title: `Onay aracı yüklendi: ${cmp}`, body: 'Kayıtta bir onay yönetim aracının isteği var.' });
+  else if (needV.length) F.push({ sev: 'warn', title: 'Kayıtta onay aracı görünmüyor', body: 'Bilinen onay araçlarının hiçbirine istek gitmedi. Kendi sunucunuzda barındırılan bir araç kullanıyorsanız bu bulguyu göz ardı edebilirsiniz.', fix: 'Perde banner\'ını <head> içine ekleyin.', fixLink: '#banner' });
+  if (insecure.length) F.push({ sev: 'warn', title: `${insecure.length} şifresiz (http://) istek`, body: 'Bu istekler şifrelenmeden gitti; içerikleri yol üzerindeki herkes tarafından okunabilir veya değiştirilebilir.', evidence: insecure.join('\n'), fix: 'Kaynakları https:// üzerinden sunun.', law: 'KVKK m.12' });
+  const unknownDoms = [...doms.values()].filter(d => !d.vendor);
+  if (unknownDoms.length) F.push({ sev: 'info', title: `${unknownDoms.length} tanımlanamayan üçüncü taraf alan adı`, body: 'Bu alan adları sağlayıcı listesinde yok. Ne işe yaradıklarını ve veri alıp almadıklarını kontrol edin.', evidence: unknownDoms.map(d => `${d.host}  (${d.count} istek)`).join('\n') });
+  if (total > 0) { const pct = Math.round(third / total * 100); F.push({ sev: 'info', title: `Üçüncü taraf yükü: ${kb(third)} (%${pct})`, body: `Toplam ${kb(total)} aktarımın %${pct}'i ${doms.size} üçüncü taraf alan adından geldi. Bu sağlayıcılar verileri Türkiye dışında işliyorsa KVKK m.9 kapsamında bir aktarım dayanağı gerekir.`, law: 'KVKK m.9' }); }
+
+  const vendors = list.map(r => {
+    const c = CAT[r.v.cat] || CAT.unknown; const mit = gaMit && ['ga4', 'gads', 'gtm'].includes(r.v.id);
+    const status = c.need ? (mit ? ['CONSENT MODE', 'warn'] : ['ONAY ÖNCESİ', (c.need === true && r.v.cat !== 'embed') ? 'crit' : 'warn']) : ['SERBEST', 'info'];
+    return { name: r.v.name, cat: c.label, how: `${r.count} istek · ilki ${msStr(r.first)}`, status };
+  }).sort((a, b) => ({ crit: 0, warn: 1, info: 2, ok: 3 })[a.status[1]] - ({ crit: 0, warn: 1, info: 2, ok: 3 })[b.status[1]]);
+  const domains = [...doms.values()].sort((a, b) => b.bytes - a.bytes).map(d => ({ host: d.host, vendor: d.vendor ? d.vendor.name : '', a: String(d.count), b: kb(d.bytes) }));
+  const cookieRows = ck.map(c => {
+    const cat = CAT[c.cat] || CAT.unknown;
+    const st = cat.need === true ? ['ONAY ÖNCESİ', 'crit'] : c.cat === 'necessary' ? ['ZORUNLU', 'ok'] : c.cat === 'unknown' ? ['BELİRSİZ', 'warn'] : ['İŞLEVSEL', 'info'];
+    return { name: c.name, domain: c.domain, vendor: c.vendor || '—', cat: cat.label, life: lifeStr(c), third: c.third, st };
+  }).sort((a, b) => ({ crit: 0, warn: 1, info: 2, ok: 3 })[a.st[1]] - ({ crit: 0, warn: 1, info: 2, ok: 3 })[b.st[1]]);
+  return { source: 'har', domain: fp, findings: F, vendors, domains, cookies: cookieRows, stats: { requests: reqs } };
+}
+
+/* ------------------------------------------------------------------ */
+/* Samples (fictional site on the reserved .example domain)            */
+/* ------------------------------------------------------------------ */
+const SAMPLE_HTML = `<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Örnek Kahve Dükkânı · Taze çekirdek kahve</title>
+<link rel="canonical" href="https://www.ornekkahve.example/">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&display=swap">
+${OC} Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-ORNEK12');<\/script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ORNEK12345"><\/script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ORNEK12345', { user_id: 'u_4821' });
+<\/script>
+${OC} Meta Pixel -->
+<script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '1234567890', { em: 'ayse.yilmaz@example.com' });
+  fbq('track', 'PageView');
+<\/script>
+${OC} Hotjar -->
+<script>
+  (function(h,o,t,j,a,r){h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+  h._hjSettings={hjid:1234567,hjsv:6};a=o.getElementsByTagName('head')[0];
+  r=o.createElement('script');r.async=1;r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+  a.appendChild(r);})(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+<\/script>
+<script type="text/plain" data-cookieconsent="preferences" src="https://widget.intercom.io/widget/abc123"><\/script>
+</head>
+<body>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-ORNEK12" height="0" width="0" style="display:none"></iframe></noscript>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1234567890&ev=PageView&noscript=1"></noscript>
+<header>
+  <a href="/">Örnek Kahve</a>
+  <nav><a href="/kahveler">Kahveler</a> <a href="/demleme">Demleme</a></nav>
+</header>
+<main>
+  <h1>Taze kavrulmuş çekirdek kahve</h1>
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/aBcDeFgHiJk" title="Kavurma süreci"></iframe>
+  <form action="http://www.ornekkahve.example/bulten" method="post">
+    <input type="email" name="eposta" placeholder="E-posta adresiniz">
+    <button>Bültene abone ol</button>
+  </form>
+</main>
+<footer>
+  <a href="/kvkk-aydinlatma-metni">KVKK Aydınlatma Metni</a>
+  <a href="mailto:destek@ornekkahve.example">destek@ornekkahve.example</a>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"><\/script>
+</body>
+</html>`;
+
+function sampleHar() {
+  const t0 = Date.parse('2026-10-08T09:15:00.000Z');
+  const E = (ms, url, o = {}) => ({
+    startedDateTime: new Date(t0 + ms).toISOString(), time: o.time || 40,
+    request: { method: o.method || 'GET', url, headers: [], cookies: (o.sent || []).map(([name, value]) => ({ name, value })), queryString: [], postData: o.post ? { mimeType: 'application/json', text: o.post } : undefined, headersSize: -1, bodySize: o.post ? o.post.length : 0 },
+    response: { status: o.status || 200, headers: (o.set || []).map(value => ({ name: 'Set-Cookie', value })), cookies: [], content: { size: o.size || 900, mimeType: o.mime || 'application/javascript' }, _transferSize: o.size || 900 }
+  });
+  return { log: { version: '1.2', creator: { name: 'Perde örnek kaydı', version: '1' }, entries: [
+    E(0, 'https://www.ornekkahve.example/', { mime: 'text/html', size: 48210, set: ['PHPSESSID=8f2c1a9d; Path=/; HttpOnly; Secure', '__cf_bm=x1y2z3; Path=/; Max-Age=1800; Domain=.ornekkahve.example; Secure; HttpOnly'] }),
+    E(110, 'https://fonts.googleapis.com/css2?family=Lora:wght@400;600&display=swap', { mime: 'text/css', size: 1840 }),
+    E(160, 'https://fonts.gstatic.com/s/lora/v32/0QI6MX1D_JOuGQbT0gvTJPa787weuxJBkqg.woff2', { mime: 'font/woff2', size: 41200 }),
+    E(180, 'https://www.googletagmanager.com/gtm.js?id=GTM-ORNEK12', { size: 98211 }),
+    E(210, 'https://www.googletagmanager.com/gtag/js?id=G-ORNEK12345', { size: 131540 }),
+    E(260, 'https://connect.facebook.net/en_US/fbevents.js', { size: 61980 }),
+    E(300, 'https://static.hotjar.com/c/hotjar-1234567.js?sv=6', { size: 3310 }),
+    E(420, 'https://www.ornekkahve.example/assets/app.js', { size: 72400 }),
+    E(540, 'https://region1.google-analytics.com/g/collect?v=2&tid=G-ORNEK12345&cid=1938274651.1759914900&en=page_view&dl=https%3A%2F%2Fwww.ornekkahve.example%2Fsepet&ep.tc_kimlik=10000000146', { method: 'POST', status: 204, size: 0, mime: '' }),
+    E(610, 'https://www.facebook.com/tr/?id=1234567890&ev=PageView&dl=https%3A%2F%2Fwww.ornekkahve.example%2F&ts=1791450900610', { mime: 'image/gif', size: 44, set: ['fr=0AbCdEfGh; Domain=.facebook.com; Path=/; Expires=Wed, 06 Jan 2027 09:15:01 GMT; Secure; HttpOnly; SameSite=None'] }),
+    E(700, 'https://script.hotjar.com/modules.8a9b0c.js', { size: 72110 }),
+    E(820, 'https://in.hotjar.com/api/v2/client/sites/1234567/visit-data?sv=6', { method: 'POST', status: 204, size: 0, mime: '' }),
+    E(900, 'https://cdn.segment.com/analytics.js/v1/OrNeKwRiTeKeY/analytics.min.js', { size: 39800 }),
+    E(1100, 'https://api.segment.io/v1/i', { method: 'POST', size: 21, mime: 'application/json', post: '{"type":"identify","userId":"u_4821","traits":{"email":"ayse.yilmaz@example.com","phone":"+90 500 000 00 00"},"context":{"page":{"url":"https://www.ornekkahve.example/sepet"}}}' }),
+    E(1300, 'https://www.youtube.com/embed/aBcDeFgHiJk', { mime: 'text/html', size: 18300, set: ['YSC=Qx7kP2; Domain=.youtube.com; Path=/; Secure; HttpOnly; SameSite=None', 'VISITOR_INFO1_LIVE=aZ9xY8; Domain=.youtube.com; Expires=Tue, 06 Apr 2027 09:15:01 GMT; Path=/; Secure; HttpOnly; SameSite=None'] }),
+    E(1500, 'http://cdn.ornekkahve-medya.example/kampanya/ekim.jpg', { mime: 'image/jpeg', size: 128400 }),
+    E(1600, 'https://www.ornekkahve.example/sepet/ozet', { mime: 'application/json', size: 2100, sent: [['PHPSESSID', '8f2c1a9d'], ['_ga', 'GA1.1.1938274651.1759914900'], ['_ga_ORNEK12345', 'GS1.1.1759914900.1.0'], ['_fbp', 'fb.1.1759914900.871234'], ['_hjSessionUser_1234567', 'eyJpZCI6IjEifQ']] })
+  ] } };
+}
+
+/* ------------------------------------------------------------------ */
+/* Report UI                                                            */
+/* ------------------------------------------------------------------ */
+const SEV = { crit: ['KRİTİK', 's-crit'], warn: ['UYARI', 's-warn'], info: ['BİLGİ', 's-info'], ok: ['GEÇTİ', 's-ok'] };
+const ORDER = { crit: 0, warn: 1, info: 2, ok: 3 };
+function finalize(r) {
+  let s = 100, c = 0;
+  for (const f of r.findings) { if (f.sev === 'crit') { c++; s -= c <= 3 ? 12 : 4; } else if (f.sev === 'warn') s -= 4; }
+  r.score = Math.max(3, Math.round(s));
+  const n = { crit: 0, warn: 0, info: 0, ok: 0 }; r.findings.forEach(f => n[f.sev]++); r.n = n;
+  r.grade = n.crit === 0 && r.score >= 85 ? { k: 'ok', label: 'Temiz görünüyor', text: 'Onay öncesi izleyici veya kişisel veri sızıntısı bulunmadı.' }
+    : n.crit === 0 ? { k: 'warn', label: 'Düzeltilmesi gerekenler var', text: `Kritik bulgu yok, ${n.warn} uyarı var.` }
+    : { k: 'crit', label: 'Yüksek risk', text: `${n.crit} kritik bulgu: ziyaretçi onayı olmadan izleme yapılıyor veya kişisel veri paylaşılıyor.` };
+}
+function findingHTML(f, open) {
+  return `<details class="f" data-sev="${f.sev}"${open ? ' open' : ''}><summary><span class="chip ${SEV[f.sev][1]}">${SEV[f.sev][0]}</span><span class="t">${esc(f.title)}</span><span class="tag">${esc(f.tag || '')}</span></summary><div class="f-b"><p>${esc(f.body)}</p>${f.evidence ? `<div><div class="k">KANIT</div><pre class="code">${esc(f.evidence)}</pre></div>` : ''}${f.fix ? `<div><div class="k">NASIL DÜZELTİLİR</div><p>${esc(f.fix)}${f.fixLink ? ` <a href="${f.fixLink}">Banner'ı oluşturun</a>` : ''}</p>${f.fixCode ? `<pre class="code" style="margin-top:8px">${esc(f.fixCode)}</pre>` : ''}</div>` : ''}${f.law ? `<div class="law">Dayanak: ${esc(f.law)}</div>` : ''}</div></details>`;
+}
+const stat = (n, l) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`;
+let lastReport = null;
+function renderReport(r) {
+  lastReport = r;
+  const F = [...r.findings].sort((a, b) => ORDER[a.sev] - ORDER[b.sev]);
+  const issues = F.filter(f => f.sev !== 'ok'), passed = F.filter(f => f.sev === 'ok');
+  const C = 2 * Math.PI * 40, n = r.n;
+  const chips = ['crit', 'warn', 'info'].filter(k => n[k]).map(k => `<span class="chip ${SEV[k][1]}">${n[k]} ${SEV[k][0]}</span>`).join('') + (n.ok ? `<span class="chip s-ok">${n.ok} GEÇTİ</span>` : '');
+  const vRows = r.vendors.map(v => `<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.cat)}</td><td>${esc(v.how)}</td><td><span class="chip s-${v.status[1]}">${esc(v.status[0])}</span></td></tr>`).join('');
+  const dHead = r.source === 'har' ? '<th>Alan adı</th><th>Sağlayıcı</th><th class="num">İstek</th><th class="num">Aktarılan</th>' : '<th>Alan adı</th><th>Sağlayıcı</th><th>Nasıl</th><th class="num">Referans</th>';
+  const dRows = r.domains.map(d => r.source === 'har' ? `<tr><td><span class="mono">${esc(d.host)}</span></td><td>${esc(d.vendor || '—')}</td><td class="num">${esc(d.a)}</td><td class="num">${esc(d.b)}</td></tr>` : `<tr><td><span class="mono">${esc(d.host)}</span></td><td>${esc(d.vendor || '—')}</td><td>${esc(d.a)}</td><td class="num">${esc(d.b)}</td></tr>`).join('');
+  const cRows = r.cookies ? r.cookies.map(c => `<tr><td><span class="mono">${esc(c.name)}</span></td><td><span class="mono">${esc(c.domain)}</span>${c.third ? ' <span class="hint">3. taraf</span>' : ''}</td><td>${esc(c.vendor)}</td><td>${esc(c.cat)}</td><td>${esc(c.life)}</td><td><span class="chip s-${c.st[1]}">${esc(c.st[0])}</span></td></tr>`).join('') : '';
+  let firstCrit = true;
+  $('#report').innerHTML = `
+    <div class="rep-h">
+      <div><h3>Tarama raporu${r.sample ? ' <span class="chip s-info">ÖRNEK SİTE</span>' : ''}</h3>
+      <div class="meta">${esc(r.domain || 'alan adı belirtilmedi')} · ${r.source === 'har' ? 'HAR ağ kaydı' : 'HTML kaynağı'}${r.label ? ' · ' + esc(r.label) : ''} · ${esc(fmtDate(r.when))}</div></div>
+      <button class="btn sm" id="copy-md" type="button">Markdown olarak kopyala</button>
+    </div>
+    <div class="sum">
+      <svg class="ring" viewBox="0 0 100 100" role="img" aria-label="Puan ${r.score} / 100">
+        <circle cx="50" cy="50" r="40" fill="none" class="ring-bg" stroke-width="9"/>
+        <circle cx="50" cy="50" r="40" fill="none" class="g-${r.grade.k}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(r.score / 100 * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 50 50)"/>
+        <text x="50" y="49" text-anchor="middle" dominant-baseline="middle" class="ring-n">${r.score}</text>
+        <text x="50" y="69" text-anchor="middle" class="ring-s">/ 100</text>
+      </svg>
+      <div><div class="grade g-${r.grade.k}">${esc(r.grade.label)}</div><p class="sum-p">${esc(r.grade.text)}</p><div class="counts">${chips}</div></div>
+    </div>
+    <div class="stats">${stat(r.vendors.length, 'tanınan sağlayıcı')}${stat(r.domains.length, 'üçüncü taraf alan adı')}${r.cookies ? stat(r.cookies.length, 'çerez') : stat(r.stats.scripts, 'betik')}${r.source === 'har' ? stat(r.stats.requests, 'istek') : stat(n.ok, 'geçen kontrol')}</div>
+    <div class="filters" role="group" aria-label="Önem derecesine göre süz">
+      <button type="button" data-f="all" aria-pressed="true">Tümü (${issues.length})</button>
+      ${['crit', 'warn', 'info'].filter(k => n[k]).map(k => `<button type="button" data-f="${k}" aria-pressed="false">${({ crit: 'Kritik', warn: 'Uyarı', info: 'Bilgi' })[k]} (${n[k]})</button>`).join('')}
+    </div>
+    <div class="flist" id="flist">${issues.map(f => { const o = f.sev === 'crit' && firstCrit; if (o) firstCrit = false; return findingHTML(f, o); }).join('') || '<p class="hint">Sorun bulunamadı.</p>'}</div>
+    ${passed.length ? `<details class="passed"><summary>Geçen kontroller (${passed.length})</summary><div class="flist">${passed.map(f => findingHTML(f, false)).join('')}</div></details>` : ''}
+    <h4 class="rep-sub">Sağlayıcılar</h4>
+    ${vRows ? `<div class="tbl-wrap"><table><thead><tr><th>Sağlayıcı</th><th>Kategori</th><th>${r.source === 'har' ? 'Etkinlik' : 'Nasıl yükleniyor'}</th><th>Durum</th></tr></thead><tbody>${vRows}</tbody></table></div>` : '<p class="hint">Tanınan sağlayıcı yok.</p>'}
+    <h4 class="rep-sub">Üçüncü taraf alan adları</h4>
+    ${dRows ? `<div class="tbl-wrap"><table><thead><tr>${dHead}</tr></thead><tbody>${dRows}</tbody></table></div>` : '<p class="hint">Üçüncü taraf bağlantısı yok.</p>'}
+    ${r.cookies ? `<h4 class="rep-sub">Çerezler</h4>${cRows ? `<div class="tbl-wrap"><table><thead><tr><th>Çerez</th><th>Alan adı</th><th>Sağlayıcı</th><th>Kategori</th><th>Ömür</th><th>Durum</th></tr></thead><tbody>${cRows}</tbody></table></div>` : '<p class="hint">Kayıtta çerez yok.</p>'}` : ''}
+  `;
+  $$('#report .filters button').forEach(b => b.addEventListener('click', () => {
+    $$('#report .filters button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    const f = b.dataset.f; $$('#flist .f').forEach(d => { d.hidden = f !== 'all' && d.dataset.sev !== f; });
+  }));
+  $('#copy-md').addEventListener('click', () => copyText(toMarkdown(r)));
+}
+function renderEmpty() {
+  lastReport = null;
+  $('#report').innerHTML = `<div class="empty"><svg width="40" height="40" viewBox="0 0 28 28" aria-hidden="true"><rect class="lg-bg" x="1" y="1" width="26" height="26" rx="7" opacity=".9"/><rect class="lg-fg" x="5.5" y="5.5" width="17" height="1.8" rx=".9"/><path class="lg-fg" d="M6.5 8.4h6.2v13.4c-2.3 0-3.7-1-4.3-3-.7-2.6-1.2-6-1.9-10.4z"/><path class="lg-fg" d="M21.5 8.4h-6.2v13.4c2.3 0 3.7-1 4.3-3 .7-2.6 1.2-6 1.9-10.4z"/></svg><h3>Henüz tarama yok</h3><p>Sayfa kaynağını yapıştırın veya bir HAR dosyası yükleyin, ardından Tara'ya basın.</p></div>`;
+}
+function toMarkdown(r) {
+  const S = { crit: 'KRİTİK', warn: 'UYARI', info: 'BİLGİ', ok: 'GEÇTİ' };
+  let s = `# Perde gizlilik taraması: ${r.domain || 'alan adı belirtilmedi'}\n\n${r.source === 'har' ? 'HAR ağ kaydı' : 'HTML kaynağı'} · ${fmtDate(r.when)} · Puan: ${r.score}/100 (${r.grade.label})\n\n## Bulgular\n`;
+  for (const f of [...r.findings].sort((a, b) => ORDER[a.sev] - ORDER[b.sev])) {
+    s += `\n### [${S[f.sev]}] ${f.title}\n\n${f.body}\n`;
+    if (f.evidence) s += '\n```\n' + f.evidence + '\n```\n';
+    if (f.fix) s += `\n**Düzeltme:** ${f.fix}\n`;
+    if (f.law) s += `\n_Dayanak: ${f.law}_\n`;
+  }
+  s += '\n## Sağlayıcılar\n\n'; r.vendors.forEach(v => { s += `- ${v.name} (${v.cat}): ${v.status[0]}\n`; });
+  if (r.cookies && r.cookies.length) { s += '\n## Çerezler\n\n'; r.cookies.forEach(c => { s += `- \`${c.name}\` · ${c.domain} · ${c.vendor} · ${c.life} · ${c.st[0]}\n`; }); }
+  return s;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scanner wiring                                                       */
+/* ------------------------------------------------------------------ */
+let mode = 'html', harData = null, harName = '', harSample = false, srcSample = false;
+function setMode(m) {
+  mode = m;
+  $('#tab-html').setAttribute('aria-selected', String(m === 'html'));
+  $('#tab-har').setAttribute('aria-selected', String(m === 'har'));
+  $('#pane-html').hidden = m !== 'html'; $('#pane-har').hidden = m !== 'har';
+  hideErr();
+}
+function showErr(msg) { const e = $('#scan-err'); e.textContent = msg; e.hidden = false; }
+function hideErr() { $('#scan-err').hidden = true; }
+function run(scroll) {
+  hideErr();
+  try {
+    let r;
+    if (mode === 'html') {
+      const src = $('#src').value;
+      if (!src.trim()) { showErr('Taranacak kaynak yok. Sayfa kaynağını yapıştırın veya "Örneği yükle"ye basın.'); return; }
+      r = scanHTML(src, $('#domain').value); r.sample = srcSample;
+    } else {
+      if (!harData) { showErr('Önce bir HAR dosyası seçin veya "Örnek HAR\'ı tara"ya basın.'); return; }
+      r = scanHAR(harData, $('#domain').value); r.sample = harSample; r.label = harName;
+    }
+    r.when = new Date(); finalize(r); renderReport(r);
+    if (scroll && window.innerWidth < 1040) $('#report').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) { showErr(err && err.message ? err.message : 'Tarama sırasında beklenmeyen bir hata oluştu.'); }
+}
+function loadSample() { setMode('html'); $('#src').value = SAMPLE_HTML; $('#domain').value = 'www.ornekkahve.example'; srcSample = true; }
+function loadHarSample() { harData = sampleHar(); harName = 'ornekkahve.har'; harSample = true; $('#har-name').textContent = `${harName} · ${harData.log.entries.length} istek (örnek)`; if (!$('#domain').value) $('#domain').value = 'www.ornekkahve.example'; }
+function readFile(file) {
+  const name = file.name || ''; const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || '');
+    if (/\.(har|json)$/i.test(name) || (mode === 'har' && !/\.html?$/i.test(name))) {
+      setMode('har');
+      try { harData = JSON.parse(text); } catch (e) { harData = null; showErr('Dosya okunamadı: geçerli bir HAR (JSON) dosyası değil.'); return; }
+      harName = name; harSample = false;
+      const cnt = harData && harData.log && Array.isArray(harData.log.entries) ? harData.log.entries.length : 0;
+      $('#har-name').textContent = `${name} · ${cnt} istek`;
+      run(true);
+    } else { setMode('html'); $('#src').value = text; srcSample = false; run(true); }
+  };
+  reader.onerror = () => showErr('Dosya okunamadı.');
+  reader.readAsText(file);
+}
+$('#tab-html').addEventListener('click', () => setMode('html'));
+$('#tab-har').addEventListener('click', () => setMode('har'));
+$('[role="tablist"]').addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const next = mode === 'html' ? 'har' : 'html'; setMode(next); $('#tab-' + next).focus(); } });
+$('#run').addEventListener('click', () => run(true));
+$('#load-sample').addEventListener('click', () => { if (mode === 'har') { loadHarSample(); } else loadSample(); run(true); });
+$('#har-sample').addEventListener('click', () => { loadHarSample(); run(true); });
+$('#clear').addEventListener('click', () => { $('#src').value = ''; $('#domain').value = ''; harData = null; harName = ''; $('#har-name').textContent = ''; srcSample = harSample = false; hideErr(); renderEmpty(); });
+$('#src').addEventListener('input', () => { srcSample = false; });
+$('#har-file').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) readFile(f); e.target.value = ''; });
+const scanIn = $('#scan-in');
+scanIn.addEventListener('dragover', e => { e.preventDefault(); $('#drop').classList.add('over'); });
+scanIn.addEventListener('dragleave', e => { if (!scanIn.contains(e.relatedTarget)) $('#drop').classList.remove('over'); });
+scanIn.addEventListener('drop', e => { e.preventDefault(); $('#drop').classList.remove('over'); const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) readFile(f); });
+
+/* ------------------------------------------------------------------ */
+/* Banner builder                                                       */
+/* ------------------------------------------------------------------ */
+const TEXTS = {
+  tr: {
+    title: 'Çerez tercihleriniz',
+    desc: 'Sitemizin çalışması için zorunlu çerezler kullanıyoruz. Ziyaretinizi ölçmek ve size uygun reklam göstermek için ek çerezleri yalnızca izin verirseniz kullanırız.',
+    policyLabel: 'Çerez Aydınlatma Metni', accept: 'Tümünü kabul et', reject: 'Tümünü reddet', customize: 'Tercihleri yönet',
+    prefsTitle: 'Çerez ayarları', prefsDesc: 'Her kategoriyi ayrı ayrı açıp kapatabilirsiniz. Seçiminizi daha sonra sayfanın köşesindeki düğmeden değiştirebilirsiniz.',
+    save: 'Seçimleri kaydet', rejectAll: 'Tümünü reddet', acceptAll: 'Tümünü kabul et', alwaysOn: 'Her zaman açık',
+    necessary: { name: 'Zorunlu', desc: 'Oturum, güvenlik ve sepet gibi sitenin çalışması için gereken çerezler. Kapatılamaz.' },
+    analytics: { name: 'Analitik', desc: 'Hangi sayfaların ziyaret edildiğini ve sitenin nasıl kullanıldığını ölçer.' },
+    marketing: { name: 'Pazarlama', desc: 'İlgi alanlarınıza göre reklam göstermek ve kampanyaları ölçmek için kullanılır.' },
+    functional: { name: 'İşlevsel', desc: 'Canlı destek, video ve harita gibi ek özellikleri etkinleştirir.' },
+    ccpaTitle: 'Gizlilik bildirimi', ccpaDesc: 'Kişisel bilgilerinizi reklam amacıyla üçüncü taraflarla paylaşabiliriz. İstemiyorsanız bu paylaşımı kapatabilirsiniz.',
+    ccpaOptOut: 'Kişisel bilgilerimi satma veya paylaşma', ok: 'Anladım',
+    gpcNote: 'Tarayıcınızın Global Privacy Control sinyali algılandı. Paylaşım kapalı tutuldu.', fab: 'Çerez tercihleri'
+  },
+  en: {
+    title: 'Your cookie choices',
+    desc: 'We use essential cookies to run this site. We only use extra cookies to measure visits and show relevant ads if you allow it.',
+    policyLabel: 'Cookie policy', accept: 'Accept all', reject: 'Reject all', customize: 'Manage preferences',
+    prefsTitle: 'Cookie settings', prefsDesc: 'Turn each category on or off. You can change your choice later from the button in the corner of the page.',
+    save: 'Save choices', rejectAll: 'Reject all', acceptAll: 'Accept all', alwaysOn: 'Always on',
+    necessary: { name: 'Essential', desc: 'Needed for sessions, security and the cart. Cannot be turned off.' },
+    analytics: { name: 'Analytics', desc: 'Measures which pages are visited and how the site is used.' },
+    marketing: { name: 'Marketing', desc: 'Used to show ads based on your interests and to measure campaigns.' },
+    functional: { name: 'Functional', desc: 'Enables extras such as live chat, videos and maps.' },
+    ccpaTitle: 'Privacy notice', ccpaDesc: 'We may share your personal information with third parties for advertising. You can turn this sharing off.',
+    ccpaOptOut: 'Do not sell or share my personal information', ok: 'Got it',
+    gpcNote: 'Your browser sent a Global Privacy Control signal. Sharing has been turned off.', fab: 'Cookie preferences'
+  }
+};
+const REGION_HINT = {
+  kvkk: 'Açık rıza modeli: izleyiciler ziyaretçi onay verene kadar çalışmaz. Kutular işaretsiz gelir, Reddet ile Kabul et aynı görünürlüktedir.',
+  gdpr: 'Açık rıza modeli, AB ve Birleşik Krallık ziyaretçileri için. İzleyiciler onaya kadar çalışmaz; Reddet ile Kabul et aynı görünürlüktedir.',
+  ccpa: 'Bildirim ve itiraz modeli: izleyiciler varsayılan olarak açıktır, ziyaretçi paylaşımı kapatabilir. Tarayıcının GPC sinyaline uyulur.',
+  auto: 'Ziyaretçinin saat dilimine göre seçilir: Europe/Istanbul için KVKK, America/Los_Angeles için CCPA, diğer tüm bölgeler için GDPR. Kesin konum gerekiyorsa sunucu tarafında belirleyin.'
+};
+const INTEG = {
+  ga4: { name: 'Google Analytics 4', cat: 'analytics', code: `<script type="text/plain" data-perde="analytics" src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"><\/script>
+<script type="text/plain" data-perde="analytics">
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+<\/script>` },
+  meta: { name: 'Meta Pixel', cat: 'marketing', code: `<script type="text/plain" data-perde="marketing">
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', 'PIXEL_ID');
+  fbq('track', 'PageView');
+<\/script>` },
+  hotjar: { name: 'Hotjar', cat: 'analytics', code: `<script type="text/plain" data-perde="analytics">
+  /* 1234567 yerine kendi Hotjar site kimliğinizi yazın */
+  (function(h,o,t,j,a,r){h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+  h._hjSettings={hjid:1234567,hjsv:6};a=o.getElementsByTagName('head')[0];
+  r=o.createElement('script');r.async=1;r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+  a.appendChild(r);})(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+<\/script>` },
+  clarity: { name: 'Microsoft Clarity', cat: 'analytics', code: `<script type="text/plain" data-perde="analytics">
+  (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "CLARITY_ID");
+<\/script>` },
+  linkedin: { name: 'LinkedIn Insight', cat: 'marketing', code: `<script type="text/plain" data-perde="marketing">
+  window._linkedin_data_partner_ids = window._linkedin_data_partner_ids || [];
+  window._linkedin_data_partner_ids.push("PARTNER_ID");
+<\/script>
+<script type="text/plain" data-perde="marketing" src="https://snap.licdn.com/li.lms-analytics/insight.min.js"><\/script>` },
+  yandex: { name: 'Yandex Metrica', cat: 'analytics', code: `<script type="text/plain" data-perde="analytics">
+  (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+  m[i].l=1*new Date();k=e.createElement(t);a=e.getElementsByTagName(t)[0];
+  k.async=1;k.src=r;a.parentNode.insertBefore(k,a);
+  })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+  ym(12345678, "init", { clickmap: true, trackLinks: true, accurateTrackBounce: true });
+<\/script>` },
+  intercom: { name: 'Intercom', cat: 'functional', code: `<script type="text/plain" data-perde="functional">
+  window.intercomSettings = { api_base: "https://api-iam.intercom.io", app_id: "APP_ID" };
+<\/script>
+<script type="text/plain" data-perde="functional" src="https://widget.intercom.io/widget/APP_ID"><\/script>` }
+};
+const CAT_ORDER = ['analytics', 'marketing', 'functional'];
+const CAT_TR = { analytics: 'Analitik', marketing: 'Pazarlama', functional: 'İşlevsel' };
+const B = { region: 'kvkk', lang: 'tr', position: 'bar', theme: 'auto', accent: '#7A1F4E', radius: 12, cats: { analytics: true, marketing: true, functional: false }, title: TEXTS.tr.title, desc: TEXTS.tr.desc, policyUrl: '/cerez-aydinlatma-metni', consentMode: true, gpc: true, fab: true, endpoint: '', version: 1, integ: new Set(['ga4', 'meta']) };
+
+function runtimeCfg() {
+  const L = TEXTS[B.lang];
+  return {
+    version: Math.max(1, parseInt(B.version, 10) || 1), region: B.region, position: B.position, theme: B.theme,
+    accent: B.accent, radius: B.radius, categories: CAT_ORDER.filter(k => B.cats[k]),
+    policyUrl: B.policyUrl.trim(), consentMode: B.consentMode, respectGPC: B.gpc, showFab: B.fab, endpoint: B.endpoint.trim(),
+    text: Object.assign({}, L, { title: B.title.trim() || L.title, desc: B.desc.trim() || L.desc })
+  };
+}
+function genInstall() {
+  const json = JSON.stringify(runtimeCfg(), null, 2).replace(/</g, '\\u003c');
+  return `${OC} Perde çerez onayı · <head> içinde, diğer tüm betiklerden önce -->\n<script>\n(${perdeRuntime.toString()})(${json});\n<\/script>`;
+}
+function genInteg() {
+  const parts = [...B.integ].map(k => `${OC} ${INTEG[k].name} · kategori: ${INTEG[k].cat} -->\n${INTEG[k].code}`);
+  parts.push(`${OC} Başka bir betik: türünü text/plain yapın, kategorisini yazın -->\n<script type="text/plain" data-perde="analytics" src="https://saglayici.example/izleyici.js"><\/script>`);
+  return parts.join('\n\n');
+}
+const API_SNIPPET = `${OC} Altbilgide tercih bağlantısı -->
+<a href="#" onclick="perde.open(); return false;">Çerez tercihleri</a>
+
+<script>
+  // Seçim değiştiğinde haber alın (ör. kendi analitik kodunuzu yönetmek için)
+  perde.on(function (secimler, kayit) {
+    console.log(secimler.analytics, secimler.marketing, kayit.ts);
+  });
+  // Mevcut durumu okuyun: { analytics: false, marketing: true, ... }
+  var durum = perde.get();
+<\/script>`;
+
+let papi = null;
+const pstore = { v: null, get() { return this.v; }, set(x) { this.v = x; } };
+function renderPreview() {
+  if (papi) papi.destroy();
+  pstore.v = null;
+  papi = perdeRuntime(runtimeCfg(), { preview: true, root: $('#pv-stage'), store: pstore });
+  papi.on(pvStatus);
+  pvStatus();
+}
+function pvStatus() {
+  const rec = pstore.v, cfg = runtimeCfg(), reg = papi ? papi.region : cfg.region;
+  const regLabel = { kvkk: 'KVKK', gdpr: 'GDPR', ccpa: 'CCPA' }[reg] || reg;
+  let html = `<span class="lbl">Bölge: ${regLabel}</span>`;
+  if (!rec) {
+    html += reg === 'ccpa' ? '<span class="chip s-warn">BİLDİRİM GÖSTERİLİYOR</span><span class="hint">İzleyiciler varsayılan olarak açık.</span>' : '<span class="chip s-info">KARAR BEKLENİYOR</span><span class="hint">Hiçbir izleyici çalışmıyor.</span>';
+    $('#pv-rec').textContent = 'Henüz seçim yapılmadı.';
+  } else {
+    const ch = papi.get();
+    html += cfg.categories.map(k => `<span class="chip ${ch[k] ? 's-ok' : 's-info'}">${CAT_TR[k].toLocaleUpperCase('tr-TR')}: ${ch[k] ? 'AÇIK' : 'KAPALI'}</span>`).join('') || '<span class="hint">Yalnızca zorunlu kategori var.</span>';
+    $('#pv-rec').textContent = JSON.stringify(rec, null, 2);
+  }
+  $('#pv-status').innerHTML = html;
+}
+function renderCode() {
+  const code = genInstall();
+  $('#code-install').textContent = code;
+  $('#code-size').textContent = `${(new Blob([code]).size / 1024).toFixed(1).replace('.', ',')} KB · ek istek yok`;
+  $('#code-integ').textContent = genInteg();
+}
+let rt = 0;
+function refresh() { clearTimeout(rt); rt = setTimeout(() => { renderPreview(); renderCode(); }, 120); }
+function regionHint() { $('#b-region-hint').textContent = REGION_HINT[B.region]; }
+
+$('#b-integ').innerHTML = Object.entries(INTEG).map(([k, v]) => `<label class="check"><input type="checkbox" id="b-int-${k}" data-k="${k}"${B.integ.has(k) ? ' checked' : ''}><span>${esc(v.name)}<small>${CAT_TR[v.cat]}</small></span></label>`).join('');
+$('#b-title').value = B.title; $('#b-desc').value = B.desc;
+$('#b-region').addEventListener('change', e => { B.region = e.target.value; regionHint(); refresh(); });
+$('#b-lang').addEventListener('change', e => {
+  const prev = TEXTS[B.lang], next = TEXTS[e.target.value];
+  if (B.title.trim() === prev.title) { B.title = next.title; $('#b-title').value = B.title; }
+  if (B.desc.trim() === prev.desc) { B.desc = next.desc; $('#b-desc').value = B.desc; }
+  B.lang = e.target.value; refresh();
+});
+for (const [id, key] of [['b-position', 'position'], ['b-theme', 'theme']]) {
+  $('#' + id).addEventListener('click', e => {
+    const b = e.target.closest('button[data-v]'); if (!b) return;
+    $$('#' + id + ' button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    B[key] = b.dataset.v; refresh();
+  });
+}
+$('#b-accent').addEventListener('input', e => { B.accent = e.target.value.toUpperCase(); $('#b-accent-hex').value = B.accent; refresh(); });
+$('#b-accent-hex').addEventListener('input', e => { let v = e.target.value.trim(); if (!v.startsWith('#')) v = '#' + v; if (/^#[0-9a-f]{6}$/i.test(v)) { B.accent = v.toUpperCase(); $('#b-accent').value = v.toLowerCase(); refresh(); } });
+$('#b-radius').addEventListener('input', e => { B.radius = +e.target.value; $('#b-radius-out').textContent = B.radius + ' px'; refresh(); });
+for (const k of CAT_ORDER) $('#b-cat-' + k).addEventListener('change', e => { B.cats[k] = e.target.checked; refresh(); });
+$('#b-title').addEventListener('input', e => { B.title = e.target.value; refresh(); });
+$('#b-desc').addEventListener('input', e => { B.desc = e.target.value; refresh(); });
+$('#b-policy').addEventListener('input', e => { B.policyUrl = e.target.value; refresh(); });
+$('#b-cm').addEventListener('change', e => { B.consentMode = e.target.checked; refresh(); });
+$('#b-gpc').addEventListener('change', e => { B.gpc = e.target.checked; refresh(); });
+$('#b-fab').addEventListener('change', e => { B.fab = e.target.checked; refresh(); });
+$('#b-endpoint').addEventListener('input', e => { B.endpoint = e.target.value; refresh(); });
+$('#b-version').addEventListener('input', e => { B.version = e.target.value; refresh(); });
+$('#b-integ').addEventListener('change', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  if (e.target.checked) { B.integ.add(k); const c = INTEG[k].cat; if (!B.cats[c]) { B.cats[c] = true; $('#b-cat-' + c).checked = true; } }
+  else B.integ.delete(k);
+  refresh();
+});
+$('#pv-reset').addEventListener('click', () => renderPreview());
+$('#pv-open').addEventListener('click', () => { if (papi) papi.open(); });
+
+/* ------------------------------------------------------------------ */
+/* Copy + toast                                                         */
+/* ------------------------------------------------------------------ */
+let tt = 0;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => { t.hidden = true; }, 2200); }
+function copyText(text) {
+  const fallback = () => {
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0'; ta.style.top = '0';
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.remove();
+    toast(ok ? 'Kopyalandı' : 'Kopyalanamadı. Metni seçip elle kopyalayın.');
+  };
+  try { navigator.clipboard.writeText(text).then(() => toast('Kopyalandı'), fallback); } catch (e) { fallback(); }
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-copy]'); if (b) copyText($(b.dataset.copy).textContent); });
+
+/* ------------------------------------------------------------------ */
+/* Boot                                                                 */
+/* ------------------------------------------------------------------ */
+$('#code-api').textContent = API_SNIPPET;
+regionHint();
+loadSample();
+run(false);
+renderPreview();
+renderCode();
+})();
+</script>
+</body>
+</html>
